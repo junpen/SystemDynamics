@@ -384,6 +384,18 @@ export class Model {
   }
 
   /**
+   * @param {import("./Blocks.js").PrimitiveConfig & import("./Blocks.js").ValuedConfig & import("./Blocks.js").VariableConfig} config
+   *
+   * @return {Variable}
+   */
+  Intervariable(config = {}) {
+    let intervariable = this._createNode("intervariable").primitive(this, excludeKeys(config, ["name"]));
+    intervariable.name = config.name || "New Intervariable";
+    intervariable.model = this;
+    return /** @type {Variable} */ (intervariable);
+  }
+
+  /**
    * @param {import("./Blocks.js").PrimitiveConfig & import("./Blocks.js").ValuedConfig & import("./Blocks.js").ConverterConfig} config
    *
    * @return {Converter}

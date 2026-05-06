@@ -1,13 +1,14 @@
 export const PRIMITIVE_TYPES = {
   STOCK: 'STOCK',
   VARIABLE: 'VARIABLE',
+  INTERVARIABLE: 'INTERVARIABLE',
   CONVERTER: 'CONVERTER',
   FLOW: 'FLOW',
   LINK: 'LINK',
   STATE: 'STATE'
 };
 
-export const NODE_TYPES = [PRIMITIVE_TYPES.STOCK, PRIMITIVE_TYPES.VARIABLE, PRIMITIVE_TYPES.CONVERTER, PRIMITIVE_TYPES.STATE, 'CLOUD'];
+export const NODE_TYPES = [PRIMITIVE_TYPES.STOCK, PRIMITIVE_TYPES.VARIABLE, PRIMITIVE_TYPES.INTERVARIABLE, PRIMITIVE_TYPES.CONVERTER, PRIMITIVE_TYPES.STATE, 'CLOUD'];
 export const EDGE_TYPES = [PRIMITIVE_TYPES.FLOW, PRIMITIVE_TYPES.LINK];
 
 export const TIME_UNITS = ['SECONDS', 'MINUTES', 'HOURS', 'DAYS', 'WEEKS', 'MONTHS', 'YEARS'];
@@ -17,6 +18,7 @@ export const INTERPOLATIONS = ['LINEAR', 'DISCRETE'];
 export const SHAPE_MAP = {
   [PRIMITIVE_TYPES.STOCK]: 'sd:stock',
   [PRIMITIVE_TYPES.VARIABLE]: 'sd:variable',
+  [PRIMITIVE_TYPES.INTERVARIABLE]: 'sd:intervariable',
   [PRIMITIVE_TYPES.CONVERTER]: 'sd:converter',
   [PRIMITIVE_TYPES.STATE]: 'sd:state',
   CLOUD: 'sd:cloud',
@@ -27,6 +29,7 @@ export const SHAPE_MAP = {
 export const COLORS = {
   STOCK: { fill: '#dbeafe', stroke: '#3b82f6', text: '#1e40af' },
   VARIABLE: { fill: '#fef3c7', stroke: '#f59e0b', text: '#92400e' },
+  INTERVARIABLE: { fill: '#ccfbf1', stroke: '#14b8a6', text: '#115e59' },
   CONVERTER: { fill: '#ede9fe', stroke: '#8b5cf6', text: '#5b21b6' },
   STATE: { fill: '#d1fae5', stroke: '#10b981', text: '#065f46' },
   CLOUD: { fill: '#e5e7eb', stroke: '#9ca3af', text: '#6b7280' },
@@ -37,6 +40,7 @@ export const COLORS = {
 export const LABELS = {
   STOCK: '存量',
   VARIABLE: '变量',
+  INTERVARIABLE: '干预变量',
   CONVERTER: '转换器',
   FLOW: '流量',
   LINK: '连接',
@@ -47,6 +51,7 @@ export const LABELS = {
 export const TYPE_LABELS = {
   STOCK: '存量',
   VARIABLE: '变量',
+  INTERVARIABLE: '干预变量',
   CONVERTER: '转换器',
   FLOW: '流量',
   LINK: '连接',

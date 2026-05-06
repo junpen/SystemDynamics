@@ -85,6 +85,8 @@ export class ModelNode {
         this._primitive = new Stock(this, config);
       } else if (this.value.nodeName === "Variable") {
         this._primitive = new Variable(this, config);
+      } else if (this.value.nodeName === "Intervariable") {
+        this._primitive = new Variable(this, config);
       } else if (this.value.nodeName === "Converter") {
         this._primitive = new Converter(this, config);
       } else if (this.value.nodeName === "State") {

@@ -44,6 +44,7 @@ const editorStore = useEditorStore();
 const nodeItems = [
   { type: 'STOCK', icon: 'S', label: LABELS.STOCK, color: COLORS.STOCK },
   { type: 'VARIABLE', icon: 'V', label: LABELS.VARIABLE, color: COLORS.VARIABLE },
+  { type: 'INTERVARIABLE', icon: 'I', label: LABELS.INTERVARIABLE, color: COLORS.INTERVARIABLE },
   { type: 'CONVERTER', icon: 'C', label: LABELS.CONVERTER, color: COLORS.CONVERTER },
 ];
 

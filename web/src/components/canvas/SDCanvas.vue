@@ -342,7 +342,7 @@ function initGraph() {
         const type = editorStore.currentEdgeType;
         if (type === 'FLOW' && sourceCell?.isNode()) {
           const sourceData = sourceCell.getData();
-          if (sourceData?.primitiveType === 'VARIABLE') {
+          if (sourceData?.primitiveType === 'VARIABLE' || sourceData?.primitiveType === 'INTERVARIABLE') {
             if (!stockFlowTipShown) {
               stockFlowTipShown = true;
               ElMessage.warning('变量节点不能作为流量线的起始');
@@ -363,7 +363,7 @@ function initGraph() {
         // LINK target must be STOCK, VARIABLE, or FLOW
         if (editorStore.currentEdgeType === 'LINK') {
           const targetType = targetCell.getData()?.primitiveType;
-          if (!['STOCK', 'VARIABLE', 'FLOW'].includes(targetType)) return false;
+          if (!['STOCK', 'VARIABLE', 'INTERVARIABLE', 'FLOW'].includes(targetType)) return false;
         }
         if (targetCell.isEdge && targetCell.isEdge()) return true;
         return sourceCell.id !== targetCell.id;
@@ -471,7 +471,7 @@ function initGraph() {
     // LINK: target must be STOCK, VARIABLE, or FLOW
     if (data.primitiveType === 'LINK') {
       const targetType = targetCell?.getData()?.primitiveType;
-      if (!['STOCK', 'VARIABLE', 'FLOW'].includes(targetType)) {
+      if (!['STOCK', 'VARIABLE', 'INTERVARIABLE', 'FLOW'].includes(targetType)) {
         graph.removeCell(edge);
         return;
       }
@@ -618,6 +618,7 @@ function handleDrop(e) {
 
   const size = type === 'STOCK' ? [150, 60] :
                type === 'VARIABLE' ? [130, 60] :
+               type === 'INTERVARIABLE' ? [130, 60] :
                type === 'CONVERTER' ? [120, 70] :
                type === 'STATE' ? [130, 50] : [130, 60];
   const color = COLORS[type];

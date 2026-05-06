@@ -206,7 +206,7 @@ function validateModel(object, errors) {
   } else {
     for (let element of object.elements) {
       let allowedBase = {
-        "type": ["STOCK", "VARIABLE", "CONVERTER", "STATE", "FLOW", "LINK", "TRANSITION"],
+        "type": ["STOCK", "VARIABLE", "INTERVARIABLE", "CONVERTER", "STATE", "FLOW", "LINK", "TRANSITION"],
         "name": "string",
         "description": "string",
         "behavior": "object",
@@ -242,6 +242,19 @@ function validateModel(object, errors) {
             interactive_max: "number"
           });
       } else if (element.type === "VARIABLE") {
+        assignProperties(
+          {},
+          {
+            value: "equation",
+            units: "string"
+          }, {
+            coordinates: "point",
+            size: "point",
+            interactive: "boolean",
+            interactive_min: "number",
+            interactive_max: "number"
+          });
+      } else if (element.type === "INTERVARIABLE") {
         assignProperties(
           {},
           {
@@ -528,6 +541,20 @@ let processors = {
     }
     return res;
   },
+  Intervariable: (element) => {
+    let res = {
+      type: "INTERVARIABLE"
+    };
+
+    let eq = element.getAttribute("Equation");
+
+    if (eq !== undefined && eq !== "") {
+      res.behavior = {
+        value: toNumberOrString(eq),
+      };
+    }
+    return res;
+  },
   Converter: (element, model) => {
     let rawData = element.getAttribute("Data") || "";
     let pairs = [];
@@ -728,6 +755,8 @@ export function createModelJSON(model) {
       return doProcessors(["base", "scalarInteractive", "connector", "units", "Flow"], item);
     case "Variable":
       return doProcessors(["base", "scalarInteractive", "node", "units", "Variable"], item);
+    case "Intervariable":
+      return doProcessors(["base", "scalarInteractive", "node", "units", "Intervariable"], item);
     case "Converter":
       return doProcessors(["base", "node", "units", "Converter"], item);
     case "State":
@@ -878,6 +907,7 @@ export function loadModelJSON(data) {
   const TYPE_ORDER = {
     "STOCK": 1,
     "VARIABLE": 1,
+    "INTERVARIABLE": 1,
     "STATE": 1,
     "FLOW": 3,
     "TRANSITION": 3,
@@ -934,6 +964,18 @@ export function loadModelJSON(data) {
 
     case "VARIABLE": {
       newPrimitive = model.Variable({
+        name,
+        value: behavior.value ?? ""
+      });
+      if (behavior.units) {
+        newPrimitive._node.setAttribute("Units", behavior.units);
+      }
+      setGeometry(newPrimitive);
+      break;
+    }
+
+    case "INTERVARIABLE": {
+      newPrimitive = model.Intervariable({
         name,
         value: behavior.value ?? ""
       });

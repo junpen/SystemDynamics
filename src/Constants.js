@@ -144,6 +144,16 @@ nodeBase.variable.setAttribute("FlipHorizontal", "false");
 nodeBase.variable.setAttribute("FlipVertical", "false");
 nodeBase.variable.setAttribute("LabelPosition", "Middle");
 
+nodeBase.intervariable = doc.createElement("Intervariable");
+nodeBase.intervariable.setAttribute("name", "New Intervariable");
+nodeBase.intervariable.setAttribute("Note", "");
+nodeBase.intervariable.setAttribute("Equation", "0");
+setValuedProperties(nodeBase.intervariable);
+nodeBase.intervariable.setAttribute("Image", "None");
+nodeBase.intervariable.setAttribute("FlipHorizontal", "false");
+nodeBase.intervariable.setAttribute("FlipVertical", "false");
+nodeBase.intervariable.setAttribute("LabelPosition", "Middle");
+
 nodeBase.button = doc.createElement("Button");
 nodeBase.button.setAttribute("name", "New Button");
 nodeBase.button.setAttribute("Note", "");

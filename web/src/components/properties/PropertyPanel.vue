@@ -31,7 +31,7 @@
         </template>
 
         <!-- Variable properties -->
-        <template v-if="selectedElement.type === 'VARIABLE'">
+        <template v-if="selectedElement.type === 'VARIABLE' || selectedElement.type === 'INTERVARIABLE'">
           <el-form-item label="方程">
             <EquationEditor v-model="equation" :rows="3" :variables="elementVariables" @change="onBehaviorChange('value', equation)" />
           </el-form-item>
@@ -188,6 +188,7 @@ const tagType = computed(() => {
   const type = selectedElement.value?.type;
   if (type === 'STOCK') return 'primary';
   if (type === 'VARIABLE') return 'warning';
+  if (type === 'INTERVARIABLE') return 'success';
   if (type === 'CONVERTER') return 'danger';
   if (type === 'STATE') return 'success';
   return 'info';

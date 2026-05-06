@@ -59,6 +59,34 @@ Graph.registerNode('sd:variable', {
   }
 });
 
+// Intervariable: Teal ellipse
+Graph.registerNode('sd:intervariable', {
+  inherit: 'ellipse',
+  width: 130,
+  height: 60,
+  attrs: {
+    body: {
+      fill: '#ccfbf1',
+      stroke: '#14b8a6',
+      strokeWidth: 1.5
+    },
+    label: {
+      fill: '#115e59',
+      fontSize: 14,
+      textAnchor: 'middle',
+      textVerticalAnchor: 'middle'
+    }
+  },
+  ports: {
+    groups: {
+      top: { position: 'top', attrs: { circle: { r: 6, magnet: true, stroke: '#14b8a6', fill: '#fff', strokeWidth: 2 } } },
+      bottom: { position: 'bottom', attrs: { circle: { r: 6, magnet: true, stroke: '#14b8a6', fill: '#fff', strokeWidth: 2 } } },
+      left: { position: 'left', attrs: { circle: { r: 6, magnet: true, stroke: '#14b8a6', fill: '#fff', strokeWidth: 2 } } },
+      right: { position: 'right', attrs: { circle: { r: 6, magnet: true, stroke: '#14b8a6', fill: '#fff', strokeWidth: 2 } } }
+    }
+  }
+});
+
 // Converter: Purple dashed ellipse
 Graph.registerNode('sd:converter', {
   inherit: 'ellipse',

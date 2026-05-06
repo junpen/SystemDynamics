@@ -7,6 +7,7 @@ let nameCounter = {};
 const TYPE_BASE_NAMES = {
   STOCK: '存量',
   VARIABLE: '变量',
+  INTERVARIABLE: '干预变量',
   CONVERTER: '转换器',
   STATE: '状态',
   FLOW: '流量'
@@ -27,6 +28,7 @@ export function createDefaultElement(type, overrides = {}) {
   const defaults = {
     STOCK: { behavior: { initial_value: 0, non_negative: false }, display: { size: [150, 60] } },
     VARIABLE: { behavior: { value: '0' }, display: { size: [130, 60] } },
+    INTERVARIABLE: { behavior: { value: '0' }, display: { size: [130, 60] } },
     CONVERTER: { behavior: { input: 'TIME', interpolation: 'LINEAR', data: [[0, 0], [1, 1]] }, display: { size: [120, 70] } },
     STATE: { behavior: { initial_value: false }, display: { size: [130, 50] } },
     FLOW: { behavior: { value: '0', non_negative: false }, display: {} },
