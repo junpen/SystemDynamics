@@ -1,0 +1,112 @@
+{
+    "engine": "SIMULATION_PACKAGE",
+    "name": "Lanchester Combat",
+    "simulation": {
+        "algorithm": "RK4",
+        "time_start": 0,
+        "time_length": 30,
+        "time_step": 0.5,
+        "time_units": "DAYS"
+    },
+    "elements": [
+        {
+            "type": "STOCK",
+            "name": "Red Force",
+            "display": {
+                "coordinates": [150, 250],
+                "size": [120, 50]
+            },
+            "behavior": {
+                "initial_value": 5000,
+                "non_negative": true
+            }
+        },
+        {
+            "type": "STOCK",
+            "name": "Blue Force",
+            "display": {
+                "coordinates": [550, 250],
+                "size": [120, 50]
+            },
+            "behavior": {
+                "initial_value": 4000,
+                "non_negative": true
+            }
+        },
+        {
+            "type": "VARIABLE",
+            "name": "Red Firepower",
+            "display": {
+                "coordinates": [350, 100],
+                "size": [120, 50]
+            },
+            "behavior": {
+                "value": 0.015
+            }
+        },
+        {
+            "type": "VARIABLE",
+            "name": "Blue Firepower",
+            "display": {
+                "coordinates": [350, 420],
+                "size": [120, 50]
+            },
+            "behavior": {
+                "value": 0.012
+            }
+        },
+        {
+            "type": "FLOW",
+            "name": "Red Losses",
+            "from": "Red Force",
+            "to": null,
+            "display": {
+                "to_coordinates": [50, 350]
+            },
+            "behavior": {
+                "value": "[Blue Force] * [Blue Firepower]",
+                "non_negative": true
+            }
+        },
+        {
+            "type": "FLOW",
+            "name": "Blue Losses",
+            "from": "Blue Force",
+            "to": null,
+            "display": {
+                "to_coordinates": [700, 350]
+            },
+            "behavior": {
+                "value": "[Red Force] * [Red Firepower]",
+                "non_negative": true
+            }
+        },
+        {
+            "type": "LINK",
+            "from": "Blue Force",
+            "to": "Red Losses"
+        },
+        {
+            "type": "LINK",
+            "from": "Blue Firepower",
+            "to": "Red Losses"
+        },
+        {
+            "type": "LINK",
+            "from": "Red Force",
+            "to": "Blue Losses"
+        },
+        {
+            "type": "LINK",
+            "from": "Red Firepower",
+            "to": "Blue Losses"
+        }
+    ],
+    "visualizations": [
+        {
+            "type": "TIME_SERIES",
+            "name": "Battle Dynamics",
+            "elements": ["Red Force", "Blue Force"]
+        }
+    ]
+}

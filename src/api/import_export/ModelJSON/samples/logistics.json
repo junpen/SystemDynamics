@@ -1,0 +1,216 @@
+{
+    "engine": "SIMULATION_PACKAGE",
+    "name": "Military Logistics",
+    "simulation": {
+        "algorithm": "RK4",
+        "time_start": 0,
+        "time_length": 60,
+        "time_step": 0.5,
+        "time_units": "DAYS"
+    },
+    "elements": [
+        {
+            "type": "STOCK",
+            "name": "Warehouse",
+            "display": {
+                "coordinates": [100, 250],
+                "size": [120, 50]
+            },
+            "behavior": {
+                "initial_value": 10000,
+                "non_negative": true
+            }
+        },
+        {
+            "type": "STOCK",
+            "name": "In Transit",
+            "display": {
+                "coordinates": [350, 250],
+                "size": [120, 50]
+            },
+            "behavior": {
+                "initial_value": 500,
+                "non_negative": true
+            }
+        },
+        {
+            "type": "STOCK",
+            "name": "Frontline",
+            "display": {
+                "coordinates": [600, 250],
+                "size": [120, 50]
+            },
+            "behavior": {
+                "initial_value": 1000,
+                "non_negative": true
+            }
+        },
+        {
+            "type": "VARIABLE",
+            "name": "Production Rate",
+            "display": {
+                "coordinates": [100, 100],
+                "size": [110, 50]
+            },
+            "behavior": {
+                "value": 200
+            }
+        },
+        {
+            "type": "VARIABLE",
+            "name": "Transport Capacity",
+            "display": {
+                "coordinates": [300, 100],
+                "size": [120, 50]
+            },
+            "behavior": {
+                "value": 150
+            }
+        },
+        {
+            "type": "VARIABLE",
+            "name": "Consumption Rate",
+            "display": {
+                "coordinates": [600, 100],
+                "size": [110, 50]
+            },
+            "behavior": {
+                "value": 80
+            }
+        },
+        {
+            "type": "VARIABLE",
+            "name": "Combat Loss Rate",
+            "display": {
+                "coordinates": [720, 380],
+                "size": [120, 50]
+            },
+            "behavior": {
+                "value": 0.02
+            }
+        },
+        {
+            "type": "VARIABLE",
+            "name": "Transit Delay",
+            "display": {
+                "coordinates": [350, 420],
+                "size": [120, 50]
+            },
+            "behavior": {
+                "value": 0.05
+            }
+        },
+        {
+            "type": "FLOW",
+            "name": "Production",
+            "from": null,
+            "to": "Warehouse",
+            "display": {
+                "from_coordinates": [100, 180],
+                "to_coordinates": [100, 225]
+            },
+            "behavior": {
+                "value": "[Production Rate]",
+                "non_negative": true
+            }
+        },
+        {
+            "type": "FLOW",
+            "name": "Shipping",
+            "from": "Warehouse",
+            "to": "In Transit",
+            "behavior": {
+                "value": "min([Warehouse], [Transport Capacity])",
+                "non_negative": true
+            }
+        },
+        {
+            "type": "FLOW",
+            "name": "Delivery",
+            "from": "In Transit",
+            "to": "Frontline",
+            "behavior": {
+                "value": "[In Transit] * [Transit Delay]",
+                "non_negative": true
+            }
+        },
+        {
+            "type": "FLOW",
+            "name": "Consumption",
+            "from": "Frontline",
+            "to": null,
+            "display": {
+                "to_coordinates": [750, 250]
+            },
+            "behavior": {
+                "value": "min([Frontline], [Consumption Rate])",
+                "non_negative": true
+            }
+        },
+        {
+            "type": "FLOW",
+            "name": "Combat Loss",
+            "from": "Frontline",
+            "to": null,
+            "display": {
+                "to_coordinates": [750, 200]
+            },
+            "behavior": {
+                "value": "[Frontline] * [Combat Loss Rate]",
+                "non_negative": true
+            }
+        },
+        {
+            "type": "LINK",
+            "from": "Production Rate",
+            "to": "Production"
+        },
+        {
+            "type": "LINK",
+            "from": "Warehouse",
+            "to": "Shipping"
+        },
+        {
+            "type": "LINK",
+            "from": "Transport Capacity",
+            "to": "Shipping"
+        },
+        {
+            "type": "LINK",
+            "from": "In Transit",
+            "to": "Delivery"
+        },
+        {
+            "type": "LINK",
+            "from": "Transit Delay",
+            "to": "Delivery"
+        },
+        {
+            "type": "LINK",
+            "from": "Frontline",
+            "to": "Consumption"
+        },
+        {
+            "type": "LINK",
+            "from": "Consumption Rate",
+            "to": "Consumption"
+        },
+        {
+            "type": "LINK",
+            "from": "Frontline",
+            "to": "Combat Loss"
+        },
+        {
+            "type": "LINK",
+            "from": "Combat Loss Rate",
+            "to": "Combat Loss"
+        }
+    ],
+    "visualizations": [
+        {
+            "type": "TIME_SERIES",
+            "name": "Supply Chain Dynamics",
+            "elements": ["Warehouse", "In Transit", "Frontline"]
+        }
+    ]
+}

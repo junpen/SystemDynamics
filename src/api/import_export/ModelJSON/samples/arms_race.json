@@ -1,0 +1,214 @@
+{
+    "engine": "SIMULATION_PACKAGE",
+    "name": "Arms Race",
+    "simulation": {
+        "algorithm": "RK4",
+        "time_start": 0,
+        "time_length": 40,
+        "time_step": 0.2,
+        "time_units": "YEARS"
+    },
+    "elements": [
+        {
+            "type": "STOCK",
+            "name": "Red Arsenal",
+            "display": {
+                "coordinates": [200, 280],
+                "size": [130, 50]
+            },
+            "behavior": {
+                "initial_value": 200,
+                "non_negative": true
+            }
+        },
+        {
+            "type": "STOCK",
+            "name": "Blue Arsenal",
+            "display": {
+                "coordinates": [550, 280],
+                "size": [130, 50]
+            },
+            "behavior": {
+                "initial_value": 150,
+                "non_negative": true
+            }
+        },
+        {
+            "type": "VARIABLE",
+            "name": "Red Threat",
+            "display": {
+                "coordinates": [350, 100],
+                "size": [130, 50]
+            },
+            "behavior": {
+                "value": 0.6
+            }
+        },
+        {
+            "type": "VARIABLE",
+            "name": "Blue Threat",
+            "display": {
+                "coordinates": [350, 460],
+                "size": [130, 50]
+            },
+            "behavior": {
+                "value": 0.5
+            }
+        },
+        {
+            "type": "VARIABLE",
+            "name": "Red Fatigue",
+            "display": {
+                "coordinates": [50, 180],
+                "size": [110, 50]
+            },
+            "behavior": {
+                "value": 0.55
+            }
+        },
+        {
+            "type": "VARIABLE",
+            "name": "Blue Fatigue",
+            "display": {
+                "coordinates": [680, 180],
+                "size": [110, 50]
+            },
+            "behavior": {
+                "value": 0.45
+            }
+        },
+        {
+            "type": "VARIABLE",
+            "name": "Red Ambition",
+            "display": {
+                "coordinates": [50, 380],
+                "size": [110, 50]
+            },
+            "behavior": {
+                "value": 10
+            }
+        },
+        {
+            "type": "VARIABLE",
+            "name": "Blue Ambition",
+            "display": {
+                "coordinates": [680, 380],
+                "size": [110, 50]
+            },
+            "behavior": {
+                "value": 8
+            }
+        },
+        {
+            "type": "FLOW",
+            "name": "Red Buildup",
+            "from": null,
+            "to": "Red Arsenal",
+            "display": {
+                "from_coordinates": [100, 280],
+                "to_coordinates": [200, 280]
+            },
+            "behavior": {
+                "value": "[Red Threat] * [Blue Arsenal] + [Red Ambition]",
+                "non_negative": true
+            }
+        },
+        {
+            "type": "FLOW",
+            "name": "Blue Buildup",
+            "from": null,
+            "to": "Blue Arsenal",
+            "display": {
+                "from_coordinates": [680, 280],
+                "to_coordinates": [550, 280]
+            },
+            "behavior": {
+                "value": "[Blue Threat] * [Red Arsenal] + [Blue Ambition]",
+                "non_negative": true
+            }
+        },
+        {
+            "type": "FLOW",
+            "name": "Red Disarm",
+            "from": "Red Arsenal",
+            "to": null,
+            "display": {
+                "to_coordinates": [100, 350]
+            },
+            "behavior": {
+                "value": "[Red Fatigue] * [Red Arsenal]",
+                "non_negative": true
+            }
+        },
+        {
+            "type": "FLOW",
+            "name": "Blue Disarm",
+            "from": "Blue Arsenal",
+            "to": null,
+            "display": {
+                "to_coordinates": [680, 350]
+            },
+            "behavior": {
+                "value": "[Blue Fatigue] * [Blue Arsenal]",
+                "non_negative": true
+            }
+        },
+        {
+            "type": "LINK",
+            "from": "Blue Arsenal",
+            "to": "Red Buildup"
+        },
+        {
+            "type": "LINK",
+            "from": "Red Threat",
+            "to": "Red Buildup"
+        },
+        {
+            "type": "LINK",
+            "from": "Red Ambition",
+            "to": "Red Buildup"
+        },
+        {
+            "type": "LINK",
+            "from": "Red Arsenal",
+            "to": "Blue Buildup"
+        },
+        {
+            "type": "LINK",
+            "from": "Blue Threat",
+            "to": "Blue Buildup"
+        },
+        {
+            "type": "LINK",
+            "from": "Blue Ambition",
+            "to": "Blue Buildup"
+        },
+        {
+            "type": "LINK",
+            "from": "Red Arsenal",
+            "to": "Red Disarm"
+        },
+        {
+            "type": "LINK",
+            "from": "Red Fatigue",
+            "to": "Red Disarm"
+        },
+        {
+            "type": "LINK",
+            "from": "Blue Arsenal",
+            "to": "Blue Disarm"
+        },
+        {
+            "type": "LINK",
+            "from": "Blue Fatigue",
+            "to": "Blue Disarm"
+        }
+    ],
+    "visualizations": [
+        {
+            "type": "TIME_SERIES",
+            "name": "Arsenal Dynamics",
+            "elements": ["Red Arsenal", "Blue Arsenal"]
+        }
+    ]
+}

@@ -1,0 +1,13 @@
+export type VectorElementType = MaterialType | VectorType | import("./Primitives").SAgent | string | boolean;
+export type ValueType = MaterialType | VectorType;
+export type VectorType = import("./formula/Vector").Vector<any>;
+export type MaterialType = import("./formula/Material").Material;
+export type GraphNode = InstanceType<mxCell>;
+export type TriggerType = "Timeout" | "Probability" | "Condition";
+export type StockTypeType = "Store" | "Conveyor";
+export type PrimitiveConnectorType = "Flow" | "Link" | "Transition";
+export type PrimitiveNodeType = "Stock" | "Text" | "Button" | "Picture" | "Converter" | "Variable" | "State" | "Action" | "Folder" | "Display" | "Agents" | "Ghost";
+export type PrimitiveNameType = PrimitiveNodeType | PrimitiveConnectorType | "Setting";
+export type FolderTypeType = "None" | "Agent";
+export type NetworkType = "None" | "Custom Function";
+export type PlacementType = "Random" | "Network" | "Grid" | "Ellipse" | "Custom Function";
