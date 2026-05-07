@@ -1,0 +1,131 @@
+{
+  "name": "水箱水量模型（带单位）",
+  "description": "一个简单的水箱模型，展示如何为系统动力学模型元素设置物理单位。水箱通过注水和排水控制水量，所有元素都标注了对应单位（升、升/秒、秒），仿真引擎会自动检查单位一致性。",
+  "engine": "SIMULATION_PACKAGE",
+  "simulation": {
+    "algorithm": "RK4",
+    "time_start": 0,
+    "time_length": 200,
+    "time_step": 1,
+    "time_units": "SECONDS"
+  },
+  "elements": [
+    {
+      "type": "STOCK",
+      "name": "水箱水量",
+      "behavior": {
+        "initial_value": 100,
+        "units": "Liters"
+      },
+      "display": {
+        "coordinates": [
+          350,
+          250
+        ],
+        "size": [
+          150,
+          60
+        ]
+      }
+    },
+    {
+      "type": "VARIABLE",
+      "name": "注水速率",
+      "behavior": {
+        "value": 5,
+        "units": "Liters per Second"
+      },
+      "display": {
+        "coordinates": [
+          100,
+          120
+        ],
+        "size": [
+          130,
+          60
+        ]
+      }
+    },
+    {
+      "type": "VARIABLE",
+      "name": "排水时间常数",
+      "behavior": {
+        "value": 50,
+        "units": "Seconds"
+      },
+      "display": {
+        "coordinates": [
+          600,
+          120
+        ],
+        "size": [
+          140,
+          60
+        ]
+      }
+    },
+    {
+      "type": "FLOW",
+      "name": "注水",
+      "from": null,
+      "to": "水箱水量",
+      "behavior": {
+        "value": "[注水速率]",
+        "units": "Liters per Second"
+      },
+      "display": {
+        "from_coordinates": [
+          165,
+          280
+        ]
+      }
+    },
+    {
+      "type": "FLOW",
+      "name": "排水",
+      "from": "水箱水量",
+      "to": null,
+      "behavior": {
+        "value": "[水箱水量] / [排水时间常数]",
+        "units": "Liters per Second"
+      },
+      "display": {
+        "to_coordinates": [
+          600,
+          280
+        ]
+      }
+    },
+    {
+      "type": "LINK",
+      "from": "注水速率",
+      "to": "注水"
+    },
+    {
+      "type": "LINK",
+      "from": "水箱水量",
+      "to": "排水"
+    },
+    {
+      "type": "LINK",
+      "from": "排水时间常数",
+      "to": "排水"
+    }
+  ],
+  "visualizations": [
+    {
+      "type": "TIME_SERIES",
+      "name": "水箱水量变化",
+      "elements": [
+        "水箱水量"
+      ]
+    }
+  ],
+  "_meta": {
+    "id": "d2b764b8",
+    "name": "水箱水量模型（带单位）",
+    "description": "一个简单的水箱模型，展示如何为系统动力学模型元素设置物理单位。水箱通过注水和排水控制水量，所有元素都标注了对应单位（升、升/秒、秒），仿真引擎会自动检查单位一致性。",
+    "updatedAt": "2026-05-07T01:18:29.506Z",
+    "createdAt": "2026-05-07T01:18:29.506Z"
+  }
+}
