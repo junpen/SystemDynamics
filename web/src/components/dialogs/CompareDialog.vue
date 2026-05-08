@@ -134,8 +134,8 @@ function toggleSelect(id, val) {
 	selectedIds.value = s;
 }
 
-function handleDelete(id) {
-	historyStore.deleteResult(id);
+async function handleDelete(id) {
+	await historyStore.deleteResult(id);
 	selectedIds.value = new Set([...selectedIds.value].filter(i => i !== id));
 	compareData.value = null;
 }
@@ -143,7 +143,7 @@ function handleDelete(id) {
 async function handleClearAll() {
 	try {
 		await ElMessageBox.confirm('确定清空所有保存的结果？', '提示', { type: 'warning' });
-		historyStore.clearAll();
+		await historyStore.clearAll();
 		selectedIds.value = new Set();
 		compareData.value = null;
 	} catch { /* cancelled */ }

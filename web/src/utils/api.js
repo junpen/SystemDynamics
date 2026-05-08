@@ -45,4 +45,22 @@ export const examplesApi = {
   }
 };
 
+export const resultsApi = {
+  list() {
+    return api.get('/results');
+  },
+  get(id) {
+    return api.get(`/results/${id}`);
+  },
+  save(record) {
+    return api.post('/results', record);
+  },
+  delete(id) {
+    return api.delete(`/results/${id}`);
+  },
+  clearAll() {
+    return api.delete('/results');
+  }
+};
+
 export default api;

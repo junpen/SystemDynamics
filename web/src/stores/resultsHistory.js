@@ -1,25 +1,20 @@
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
-
-const STORAGE_KEY = 'sd_simulation_results_history';
+import { resultsApi } from '../utils/api.js';
 
 export const useResultsHistoryStore = defineStore('resultsHistory', () => {
-	const records = ref(loadFromStorage());
+	const records = ref([]);
 
-	function loadFromStorage() {
+	async function loadFromServer() {
 		try {
-			const raw = localStorage.getItem(STORAGE_KEY);
-			return raw ? JSON.parse(raw) : [];
+			const res = await resultsApi.list();
+			records.value = res.data.results || [];
 		} catch {
-			return [];
+			records.value = [];
 		}
 	}
 
-	function persist() {
-		localStorage.setItem(STORAGE_KEY, JSON.stringify(records.value));
-	}
-
-	function saveResult(name, modelName, results) {
+	async function saveResult(name, modelName, results) {
 		const record = {
 			id: Date.now().toString(36) + Math.random().toString(36).slice(2, 8),
 			name,
@@ -27,24 +22,33 @@ export const useResultsHistoryStore = defineStore('resultsHistory', () => {
 			modelName,
 			results
 		};
+		await resultsApi.save(record);
 		records.value.unshift(record);
-		persist();
 		return record;
 	}
 
-	function deleteResult(id) {
+	async function deleteResult(id) {
+		await resultsApi.delete(id);
 		records.value = records.value.filter(r => r.id !== id);
-		persist();
 	}
 
-	function clearAll() {
+	async function clearAll() {
+		await resultsApi.clearAll();
 		records.value = [];
-		persist();
 	}
 
-	function getResult(id) {
-		return records.value.find(r => r.id === id) || null;
+	async function getResult(id) {
+		const local = records.value.find(r => r.id === id);
+		if (local) return local;
+		try {
+			const res = await resultsApi.get(id);
+			return res.data;
+		} catch {
+			return null;
+		}
 	}
 
-	return { records, saveResult, deleteResult, clearAll, getResult };
+	loadFromServer();
+
+	return { records, saveResult, deleteResult, clearAll, getResult, loadFromServer };
 });

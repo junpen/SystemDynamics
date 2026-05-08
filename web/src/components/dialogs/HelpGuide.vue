@@ -67,7 +67,7 @@
           <ol class="step-list">
             <li>
               <span class="step-num">1</span>
-              <strong>添加图元</strong> — 从左侧面板拖拽「存量」「变量」「转换器」到画布
+              <strong>添加图元</strong> — 从左侧面板拖拽「存量」「变量」「干预变量」「转换器」到画布
             </li>
             <li>
               <span class="step-num">2</span>
@@ -122,6 +122,19 @@
             <ul>
               <li><strong>方程</strong>：使用 <code>[元素名]</code> 引用其他元素，如 <code>[人口] * [增长率]</code></li>
               <li>支持数学函数、条件判断、时间函数等（见下方方程语法说明）</li>
+            </ul>
+          </div>
+
+          <div class="element-card intervariable">
+            <div class="element-header">
+              <span class="element-icon" style="background:#ccfbf1;border-color:#14b8a6;color:#115e59;">I</span>
+              <h3>干预变量（Intervention Variable）</h3>
+            </div>
+            <p>表示<strong>外部干预措施</strong>对系统产生的影响，用于模拟不同政策或策略下的系统行为变化。</p>
+            <ul>
+              <li><strong>方程</strong>：定义干预的方式和强度，使用 <code>[元素名]</code> 引用其他元素</li>
+              <li>与普通变量类似，但在对比分析中可独立标识为干预因素，便于区分系统内生变量与外部干预</li>
+              <li><strong>单位</strong>：可选设置，如"%""人""元"</li>
             </ul>
           </div>
 
@@ -729,6 +742,10 @@ kbd {
 
 .element-card.variable {
   border-left: 4px solid #f59e0b;
+}
+
+.element-card.intervariable {
+  border-left: 4px solid #14b8a6;
 }
 
 .element-card.converter {

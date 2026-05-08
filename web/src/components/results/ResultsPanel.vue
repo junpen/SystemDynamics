@@ -93,7 +93,7 @@ async function saveResult() {
       cancelButtonText: '取消'
     });
     if (name) {
-      historyStore.saveResult(name, modelStore.modelJSON.name, simStore.results);
+      await historyStore.saveResult(name, modelStore.modelJSON.name, simStore.results);
       ElMessage.success('结果已保存');
     }
   } catch { /* cancelled */ }

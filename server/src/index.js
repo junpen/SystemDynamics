@@ -4,6 +4,7 @@ import { PORT, CORS_ORIGIN } from './config.js';
 import simulateRoutes from './routes/simulate.js';
 import modelRoutes from './routes/models.js';
 import exampleRoutes from './routes/examples.js';
+import resultRoutes from './routes/results.js';
 
 const app = express();
 
@@ -13,6 +14,7 @@ app.use(express.json({ limit: '10mb' }));
 app.use('/api/v1', simulateRoutes);
 app.use('/api/v1/models', modelRoutes);
 app.use('/api/v1/examples', exampleRoutes);
+app.use('/api/v1/results', resultRoutes);
 
 app.get('/api/v1/health', (req, res) => {
   res.json({ status: 'ok', version: '1.0.0' });
