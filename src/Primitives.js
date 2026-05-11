@@ -78,35 +78,8 @@ export class SPrimitive {
    * @returns
    */
   matchPrimitiveUnits(u) {
-    if (!u) {
-      return 1;
-    }
-
-    if (this.unitToVariableUnits.has(u)) {
-      return this.unitToVariableUnits.get(u);
-    }
-
-    let timer = this.dna.toBase;
-
-
-    if ((this instanceof SFlow) && this.dna.flowUnitless) {
-      timer = fn["*"](timer || 1, this.simulate.timeUnits.toBase);
-    } 
-
-    if (!this.dna.units) {
-      if (u.isDeepUnitless()) {
-        this.unitToVariableUnits.set(u, u.toBase);
-        return u.toBase;
-      }
-    }
-
-    u.addBase();
-    timer = fn["/"](u.toBase, timer);
-
-
-    this.unitToVariableUnits.set(u, timer);
-
-    return timer;
+    // Units are display-only: no conversion needed
+    return 1;
   }
 
 
@@ -200,7 +173,7 @@ export class SPrimitive {
     if (length === undefined) {
       res = items.map(x => x.fullClone());
     } else {
-      let bins = Math.ceil(div(length.forceUnits(this.simulate.timeUnits), this.dna.solver.userTimeStep).value);
+      let bins = Math.ceil(length.value / this.dna.solver.userTimeStep.value);
 
       res = [];
       for (let i = Math.max(0, items.length - 1 - bins); i < items.length; i++) {
@@ -222,9 +195,9 @@ export class SPrimitive {
 
     // check whether we have evaluated the current time period and stored it
     if (this.pastValues.length - 1 < Math.round((this.simulate.time().value - this.simulate.timeStart.value) / this.dna.solver.userTimeStep.value)) {
-      periods = div(delay.forceUnits(this.simulate.timeUnits), this.dna.solver.userTimeStep).value;
+      periods = delay.value / this.dna.solver.userTimeStep.value;
     } else {
-      periods = div(delay.forceUnits(this.simulate.timeUnits), this.dna.solver.userTimeStep).value + 1;
+      periods = delay.value / this.dna.solver.userTimeStep.value + 1;
     }
 
 
@@ -271,74 +244,8 @@ export class SPrimitive {
    * @param {boolean=} ignoreFlow
    */
   testUnits(m, ignoreFlow) {
-
-    if (m instanceof Vector) {
-      m.recurseApply(x => {
-        this.testUnits(x, ignoreFlow);
-        return x;
-      });
-      return;
-    }
-
-    if (this.dna.adoptUnits) {
-      if (!m.units) {
-        m.units = this.simulate.unitManager.getUnitStore([], [], false, true);
-      }
-
-      this.dna.units = m.units;
-      this.dna.flowUnitless = false;
-    }
-
-    if (!this.dna.units && m.units && m.units.isDeepUnitless()) {
-      m.units.addBase();
-      m.value = m.value * m.units.toBase;
-      m.units = null;
-      m.explicitUnits = true;
-    }
-
-    if (!this.dna.units && m.units && !m.units.isUnitless()) {
-      throw new ModelError(`Wrong units generated for <i>[${toHTML(this.dna.name)}]</i>. Expected no units and got <i>${m.units.toString()}</i>. Either specify units for the primitive or adjust the equation.`, {
-        primitive: this.orig(),
-        showEditor: true,
-        code: 1081
-      });
-    } else if (this.dna.units !== m.units) {
-      if (typeof m === "boolean" || typeof m === "string" || m instanceof String || m instanceof Boolean) {
-        if (!this.dna.units) {
-          return;
-        }
-        throw new ModelError(`Cannot add units to a String or Boolean in <i>[${toHTML(this.dna.name)}]</i>.`, {
-          primitive: this.orig(),
-          showEditor: true,
-          code: 1082
-        });
-      }
-
-      // we allow applying the primitive units onto a unitless value so
-      // the allow unit application is true
-      let scale = convertUnits(m.units, this.dna.units, true);
-
-      if (scale === 0) {
-        throw new ModelError(`Wrong units generated for <i>[${toHTML(this.dna.name)}]</i>. Expected <i>${this.dna.units ? this.dna.units.toString() : "unitless"}</i>, and got <i>${m.units ? m.units.toString() : "unitless"}</i>.`, {
-          primitive: this.orig(),
-          showEditor: true,
-          code: 1083
-        });
-      } else {
-        m.value = m.value * scale;
-        m.units = this.dna.units;
-        m.explicitUnits = true;
-      }
-    } else if (this.dna.units && this.dna.units === m.units && !m.explicitUnits) {
-      m.explicitUnits = true;
-    }
-
-    if (this instanceof SFlow && ignoreFlow !== true && this.dna.flowUnitless) {
-      let x = mult(m, new Material(1, this.simulate.timeUnits));
-      m.value = x.value;
-      m.units = x.units;
-      m.explicitUnits = true;
-    }
+    // Units are display-only: skip all unit validation and conversion
+    return;
   }
 
   setValue(_v) {
@@ -1576,14 +1483,14 @@ export class SStock extends SPrimitive {
 
     if (
       this.delay === undefined
-      || lessThanEq(this.delay, this.simulate.timeStep.fullClone())
+      || this.delay.value <= this.simulate.timeStep.value
     ) {
       // it's a non-serialized stock;
       this.level = init;
     } else {
       // it's serialized
-      this.initRate = div(init, this.delay.forceUnits(this.simulate.timeUnits));
-      let startValue = mult(this.initRate, this.simulate.userTimeStep.fullClone());
+      this.initRate = div(init, new Material(this.delay.value));
+      let startValue = mult(this.initRate, new Material(this.simulate.userTimeStep.value));
 
       this.level = startValue;
 
@@ -1636,7 +1543,7 @@ export class SStock extends SPrimitive {
     
     if (this.delay !== undefined) {
       // @ts-ignore bigjs is misstyped
-      targetTime = new Material(Big(oldTime.value).plus(this.delay.forceUnits(oldTime.units).value).toNumber(), oldTime.units);
+      targetTime = new Material(Big(oldTime.value).plus(this.delay.value).toNumber(), oldTime.units);
     }
 
     if (this.delay === undefined || lessThanEq(targetTime, this.simulate.time())) {
@@ -1956,7 +1863,7 @@ export class SFlow extends SPrimitive {
   }
 
   checkRate(rate) {
-    let newRate = div(rate, this.dna.adoptUnits ? new Material(this.dna.solver.timeStep.value) : this.dna.solver.timeStep.fullClone());
+    let newRate = div(rate, new Material(this.dna.solver.timeStep.value));
 
     if (this.dna.nonNegative) {
       if (newRate instanceof Vector) {
@@ -2021,29 +1928,12 @@ export class SFlow extends SPrimitive {
 
       this.rate = x.fullClone();
 
-      if (!this.dna.adoptUnits) {
-        if (this.rate instanceof Vector) {
-          let d = this.dna;
-          this.rate.recurseApply((x) => {
-            verifyValuedType(x, this);
-
-            if (!x.units) {
-              x.units = d.units;
-            }
-            return x;
-          });
-        } else if (!this.rate.units) {
-          verifyValuedType(this.rate, this);
-
-          this.rate.units = this.dna.units;
-          this.rate.explicitUnits = true;
-        }
-      }
+      // Units are display-only: skip unit assignment on rate
 
 
       this.testUnits(this.rate, true);
 
-      this.rate = mult(this.rate, this.dna.adoptUnits ? new Material(this.dna.solver.timeStep.value) : this.dna.solver.timeStep.fullClone());
+      this.rate = mult(this.rate, new Material(this.dna.solver.timeStep.value));
 
       if (override) {
         if (this.RKPrimary.length > 0) {
@@ -2075,7 +1965,7 @@ export class SFlow extends SPrimitive {
 
       let rate = this.blendedRate ? this.blendedRate.fullClone() : this.rate.fullClone();
 
-      rate = mult(rate, this.dna.adoptUnits ? new Material(timeChange.forceUnits(this.simulate.timeUnits).value) : timeChange);
+      rate = mult(rate, new Material(timeChange.value != null ? timeChange.value : timeChange));
 
 
 

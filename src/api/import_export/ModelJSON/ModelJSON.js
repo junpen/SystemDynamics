@@ -128,7 +128,8 @@ function validateModel(object, errors) {
       "simulation": "object",
       "elements": "array",
       "visualizations": "array",
-      "engine_settings": "object"
+      "engine_settings": "object",
+      "groups": "array"
     },
     errors
   );
@@ -347,6 +348,17 @@ function validateModel(object, errors) {
           validateKeys("元素的 \"display\"", element.display, allowedDisplay, errors);
         }
       }
+    }
+  }
+
+  if (object.groups) {
+    for (const group of object.groups) {
+      validateKeys("分组", group, {
+        "name": "string",
+        "color": "string",
+        "collapsed": "boolean",
+        "childNames": "array"
+      }, errors);
     }
   }
 }

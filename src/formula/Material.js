@@ -49,7 +49,8 @@ export class Material {
     } else {
       let scale = convertUnits(this.units, newUnits);
       if (scale === 0) {
-        unitAlert(this.units, newUnits, "conversion of units");
+        // Units are display-only: skip conversion instead of error
+        this.units = newUnits;
       } else {
         this.value = fn["*"](this.value, scale);
         this.units = newUnits;

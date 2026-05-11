@@ -1,5 +1,5 @@
 {
-  "name": "测试模型2",
+  "name": "分组测试",
   "description": "",
   "engine": "SIMULATION_PACKAGE",
   "simulation": {
@@ -12,15 +12,15 @@
   "elements": [
     {
       "type": "STOCK",
-      "name": "存量 1",
+      "name": "aaa",
       "behavior": {
         "initial_value": 0,
         "non_negative": false
       },
       "display": {
         "coordinates": [
-          345,
-          206
+          330,
+          250
         ],
         "size": [
           150,
@@ -30,7 +30,7 @@
     },
     {
       "type": "STOCK",
-      "name": "存量 2",
+      "name": "bbb",
       "behavior": {
         "initial_value": 0,
         "non_negative": false
@@ -48,14 +48,14 @@
     },
     {
       "type": "VARIABLE",
-      "name": "变量 1",
+      "name": "ddd",
       "behavior": {
         "value": "0.1"
       },
       "display": {
         "coordinates": [
-          434,
-          477
+          419,
+          517
         ],
         "size": [
           130,
@@ -66,10 +66,10 @@
     {
       "type": "FLOW",
       "name": "流量 1",
-      "from": "存量 1",
-      "to": "存量 2",
+      "from": "aaa",
+      "to": "bbb",
       "behavior": {
-        "value": "[变量 1]",
+        "value": "[ddd]",
         "non_negative": false
       },
       "display": {}
@@ -77,14 +77,14 @@
     {
       "type": "LINK",
       "name": "",
-      "from": "变量 1",
+      "from": "ddd",
       "to": "流量 1",
       "behavior": {},
       "display": {}
     },
     {
       "type": "INTERVARIABLE",
-      "name": "干预变量 1",
+      "name": "ccc",
       "behavior": {
         "value": "0.2"
       },
@@ -104,8 +104,28 @@
       "name": "",
       "behavior": {},
       "display": {},
-      "from": "干预变量 1",
+      "from": "ccc",
       "to": "流量 1"
+    }
+  ],
+  "groups": [
+    {
+      "name": "456",
+      "color": "#818cf8",
+      "collapsed": false,
+      "childNames": [
+        "aaa",
+        "ddd"
+      ]
+    },
+    {
+      "name": "分组2",
+      "color": "#f59e0b",
+      "collapsed": false,
+      "childNames": [
+        "bbb",
+        "ccc"
+      ]
     }
   ],
   "visualizations": [],
@@ -113,7 +133,7 @@
     "id": "62978966",
     "name": "测试模型",
     "description": "",
-    "updatedAt": "2026-05-06T06:32:51.326Z",
+    "updatedAt": "2026-05-11T06:42:03.572Z",
     "createdAt": "2026-04-24T01:55:08.749Z"
   }
 }

@@ -567,16 +567,7 @@ export class Simulator {
    * @return {number}
    */
   adjustNum(v, x) {
-    if (v.dna.unitless && x.units) {
-      throw new ModelError(`The result of the calculation has units <i>${x.units.toString()}</i>, but the primitive is unitless. Please set the units for the primitive so we can determine the proper output.`,
-        {
-          primitive: v,
-          showEditor: true,
-          code: 8000
-        });
-    }
-
-
+    // Units are display-only: skip unit validation, just return the numeric value
     if ((v instanceof SState) || ((!x.units) && !(v instanceof SFlow))) {
       if (typeof x === "object" && "value" in x) {
         return +x.value;
@@ -585,11 +576,11 @@ export class Simulator {
       // @ts-ignore
       return x;
     } else {
-      let m = v.matchPrimitiveUnits(x.units);
-      if (m === 1) {
-        return x.value;
+      // Return raw value, ignoring unit conversion
+      if (typeof x === "object" && "value" in x) {
+        return +x.value;
       }
-      return +fn["*"](x.value, m);
+      return x;
     }
   }
 

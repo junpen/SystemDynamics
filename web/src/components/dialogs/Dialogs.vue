@@ -107,7 +107,7 @@
 
 <script setup>
 import { Upload } from '@element-plus/icons-vue';
-import { ElMessage } from 'element-plus';
+import { ElMessage, ElMessageBox } from 'element-plus';
 import { ref, watch } from 'vue';
 import { useEditorStore } from '../../stores/editor.js';
 import { useModelStore } from '../../stores/model.js';
@@ -181,11 +181,18 @@ async function loadModel(row) {
 
 async function deleteModel(id) {
 	try {
+		await ElMessageBox.confirm('确定要删除该模型吗？此操作不可撤销。', '删除模型', {
+			confirmButtonText: '确定',
+			cancelButtonText: '取消',
+			type: 'warning'
+		});
 		await modelsApi.delete(id);
 		modelList.value = modelList.value.filter(m => m.id !== id);
 		ElMessage.success('模型已删除');
 	} catch (e) {
-		ElMessage.error('删除模型失败');
+		if (e !== 'cancel') {
+			ElMessage.error('删除模型失败');
+		}
 	}
 }
 

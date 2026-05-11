@@ -1490,7 +1490,8 @@ export function neq(lhs, rhs, lhsNode, rhsNode) {
   if (lhs.units !== rhs.units) {
     scale = convertUnits(rhs.units, lhs.units);
     if (scale === 0) {
-      unitAlert(lhs, rhs, "inequality comparison", "<>", lhsNode, rhsNode);
+      // Units are display-only: fall back to raw value comparison instead of error
+      return !fn["="](lhs.value, rhs.value);
     }
   }
 
@@ -1552,7 +1553,8 @@ export function eq(lhs, rhs, lhsNode, rhsNode, allowVectorReturn=false) {
   if (lhs.units !== rhs.units) {
     scale = convertUnits(rhs.units, lhs.units);
     if (scale === 0) {
-      unitAlert(lhs, rhs, "equality comparison", "=", lhsNode, rhsNode);
+      // Units are display-only: fall back to raw value comparison instead of error
+      return fn["="](lhs.value, rhs.value);
     }
   }
 
@@ -1613,7 +1615,8 @@ export function lessThan(lhs, rhs, lhsNode, rhsNode) {
     if (lhs.units !== rhs.units) {
       scale = convertUnits(rhs.units, lhs.units);
       if (scale === 0) {
-        unitAlert(lhs, rhs, "comparison", "<", lhsNode, rhsNode);
+        // Units are display-only: fall back to raw value comparison instead of error
+        return fn["<"](lhs.value, rhs.value);
       }
     }
 
@@ -1661,7 +1664,8 @@ export function lessThanEq(lhs, rhs, lhsNode, rhsNode) {
     if (lhs.units !== rhs.units) {
       scale = convertUnits(rhs.units, lhs.units);
       if (scale === 0) {
-        unitAlert(lhs, rhs, "comparison", "<=", lhsNode, rhsNode);
+        // Units are display-only: fall back to raw value comparison instead of error
+        return fn["<="](lhs.value, rhs.value);
       }
     }
 
@@ -1707,7 +1711,8 @@ export function greaterThan(lhs, rhs, lhsNode, rhsNode) {
     if (lhs.units !== rhs.units) {
       scale = convertUnits(rhs.units, lhs.units);
       if (scale === 0) {
-        unitAlert(lhs, rhs, "comparison", ">", lhsNode, rhsNode);
+        // Units are display-only: fall back to raw value comparison instead of error
+        return fn[">"](lhs.value, rhs.value);
       }
     }
 
@@ -1753,7 +1758,8 @@ export function greaterThanEq(lhs, rhs, lhsNode, rhsNode) {
     if (lhs.units !== rhs.units) {
       scale = convertUnits(rhs.units, lhs.units);
       if (scale === 0) {
-        unitAlert(lhs, rhs, "comparison", ">=", lhsNode, rhsNode);
+        // Units are display-only: fall back to raw value comparison instead of error
+        return fn[">="](lhs.value, rhs.value);
       }
     }
 
@@ -1803,7 +1809,10 @@ export function plus(lhs, rhs, lhsNode, rhsNode) {
     if (lhs.units !== rhs.units) {
       scale = convertUnits(rhs.units, lhs.units, true);
       if (scale === 0) {
-        unitAlert(lhs, rhs, "addition", "+", lhsNode, rhsNode);
+        // Units are display-only: add raw values instead of error
+        return /** @type {any} */ (new Material(
+          fn["+"](lhs.value, rhs.value)
+        ));
       } else if (scale !== 1) {
         explicitUnits = false;
       }
@@ -1877,7 +1886,10 @@ export function minus(lhs, rhs, lhsNode, rhsNode) {
     if (lhs.units !== rhs.units) {
       scale = convertUnits(rhs.units, lhs.units, true);
       if (scale === 0) {
-        unitAlert(lhs, rhs, "subtraction", "-", lhsNode, rhsNode);
+        // Units are display-only: subtract raw values instead of error
+        return /** @type {any} */ (new Material(
+          fn["-"](lhs.value, rhs.value)
+        ));
       } else if (scale !== 1) {
         explicitUnits = false;
       }

@@ -201,6 +201,87 @@ export function modelJSONToGraph(modelJSON, graph) {
 
     graph.addEdge(edgeConfig);
   }
+
+  // Fourth pass: create groups
+  if (modelJSON.groups && modelJSON.groups.length > 0) {
+    for (const group of modelJSON.groups) {
+      const childNodes = (group.childNames || [])
+        .map(name => nodeMap[name])
+        .filter(Boolean);
+
+      if (childNodes.length === 0) continue;
+
+      // Find connected cloud nodes to include in the group
+      const cloudNodes = [];
+      const cloudIds = new Set();
+      for (const node of childNodes) {
+        const edges = graph.getConnectedEdges(node);
+        for (const edge of edges) {
+          const src = edge.getSourceCell();
+          const tgt = edge.getTargetCell();
+          if (src?.getData()?.isCloud && !cloudIds.has(src.id) && !childNodes.some(c => c.id === src.id)) {
+            cloudIds.add(src.id);
+            cloudNodes.push(src);
+          }
+          if (tgt?.getData()?.isCloud && !cloudIds.has(tgt.id) && !childNodes.some(c => c.id === tgt.id)) {
+            cloudIds.add(tgt.id);
+            cloudNodes.push(tgt);
+          }
+        }
+      }
+      const allChildren = [...childNodes, ...cloudNodes];
+
+      let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+      for (const node of allChildren) {
+        const pos = node.getPosition();
+        const size = node.getSize();
+        minX = Math.min(minX, pos.x);
+        minY = Math.min(minY, pos.y);
+        maxX = Math.max(maxX, pos.x + size.width);
+        maxY = Math.max(maxY, pos.y + size.height);
+      }
+
+      const padding = 30;
+      const headerHeight = 36;
+      const groupX = minX - padding;
+      const groupY = minY - padding - headerHeight;
+      const groupWidth = maxX - minX + padding * 2;
+      const groupHeight = maxY - minY + padding * 2 + headerHeight;
+      const color = group.color || '#818cf8';
+
+      const groupNode = graph.addNode({
+        shape: 'sd:group',
+        x: groupX,
+        y: groupY,
+        width: groupWidth,
+        height: group.collapsed ? 40 : groupHeight,
+        attrs: {
+          body: { fill: color + '18', stroke: color },
+          headerBg: { fill: color },
+        },
+        data: {
+          isGroup: true,
+          collapsed: group.collapsed || false,
+          expandedSize: { width: groupWidth, height: groupHeight },
+          childIds: allChildren.map(n => n.id),
+        },
+      });
+      groupNode.setAttrByPath('headerLabel/text', group.name || '分组');
+      groupNode.setAttrByPath('toggleIcon/text', group.collapsed ? '▶' : '▼');
+      groupNode.setProp('zIndex', -1);
+      groupNode.toBack();
+
+      if (group.collapsed) {
+        for (const child of allChildren) {
+          child.setVisible(false);
+          const edges = graph.getConnectedEdges(child);
+          for (const edge of edges) {
+            edge.setVisible(false);
+          }
+        }
+      }
+    }
+  }
 }
 
 export function graphToModelJSON(graph, baseModelJSON) {
@@ -284,8 +365,32 @@ export function graphToModelJSON(graph, baseModelJSON) {
     elements.push(element);
   }
 
+  // Process groups
+  const groups = [];
+  for (const cell of cells) {
+    if (!cell.isNode()) continue;
+    const data = cell.getData();
+    if (!data?.isGroup) continue;
+
+    const childIds = data.childIds || [];
+    const childNames = childIds.map(id => {
+      const child = graph.getCellById(id);
+      if (!child) return null;
+      const idx = indexMap[child.id];
+      return idx != null ? elements[idx]?.name : null;
+    }).filter(Boolean);
+
+    groups.push({
+      name: cell.getAttrByPath('headerLabel/text') || '',
+      color: cell.getAttrByPath('headerBg/fill') || '#818cf8',
+      collapsed: data.collapsed || false,
+      childNames,
+    });
+  }
+
   return {
     ...baseModelJSON,
-    elements
+    elements,
+    groups,
   };
 }

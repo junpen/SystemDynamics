@@ -25,6 +25,7 @@ export const useModelStore = defineStore('model', () => {
         time_units: 'YEARS'
       },
       elements: [],
+      groups: [],
       visualizations: []
     };
   }

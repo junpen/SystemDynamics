@@ -236,4 +236,54 @@ Graph.registerEdge('sd:link', {
   }
 });
 
+// Group container node
+Graph.registerNode('sd:group', {
+  inherit: 'rect',
+  width: 400,
+  height: 300,
+  markup: [
+    { tagName: 'rect', selector: 'body' },
+    { tagName: 'rect', selector: 'headerBg' },
+    { tagName: 'text', selector: 'headerLabel' },
+    { tagName: 'text', selector: 'toggleIcon' },
+  ],
+  attrs: {
+    body: {
+      fill: '#f0f4ff',
+      stroke: '#818cf8',
+      strokeWidth: 2,
+      strokeDasharray: '8,4',
+      rx: 8,
+      ry: 8,
+    },
+    headerBg: {
+      refWidth: 1,
+      height: 32,
+      fill: '#818cf8',
+      rx: 8,
+      ry: 8,
+    },
+    headerLabel: {
+      refX: 0.03,
+      refY: 16,
+      fill: '#ffffff',
+      fontSize: 13,
+      fontWeight: 'bold',
+      textAnchor: 'start',
+      textVerticalAnchor: 'middle',
+      text: '分组',
+    },
+    toggleIcon: {
+      refX: 0.95,
+      refY: 16,
+      fill: '#ffffff',
+      fontSize: 14,
+      textAnchor: 'end',
+      textVerticalAnchor: 'middle',
+      cursor: 'pointer',
+      text: '▼',
+    },
+  },
+});
+
 console.log('SD custom shapes registered');

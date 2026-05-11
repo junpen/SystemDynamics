@@ -1066,23 +1066,8 @@ export function simpleNum(mat, units, simulate) {
   }
 
   if (mat instanceof Material) {
-    if (!units && mat.units) {
-      throw new ModelError(`The result of the calculation has units <i>${mat.units.toString()}</i>, but no units are specified for the calculation. Please set the units for the calculation so we can determine the proper output.`,
-        {
-          code: 1013
-        });
-    }
-
-    if (!mat.units) {
-      return /** @type {any} */ (+mat.value);
-    } else {
-
-      mat.units.addBase();
-      units.addBase();
-
-      return /** @type {any} */ (+fn["*"](mat.value, fn["/"](mat.units.toBase, units.toBase)));
-    }
-
+    // Units are display-only: just return the numeric value
+    return /** @type {any} */ (+mat.value);
   }
 }
 
@@ -1251,13 +1236,13 @@ function getDNA(node, submodel, solvers, simulate) {
     } else {
       try {
         dna.residency = evaluateTree(trimTree(createTree(node.residency, "p:" + dna.id + ":residency", simulate), new Map(), simulate), new Map(), simulate);
-        if (!dna.residency.units) {
-          dna.residency.units = simulate.timeUnits;
-        }
-        if (eq(dna.residency, new Material(0, simulate.timeUnits))) {
+        if (dna.residency.value === 0) {
           dna.residency = null;
         }
       } catch (err) {
+        if (err instanceof ModelError) {
+          throw err;
+        }
         throw new ModelError("Invalid state residency.", {
           primitive: node,
           showEditor: false,
@@ -1271,14 +1256,14 @@ function getDNA(node, submodel, solvers, simulate) {
           primitive: node,
           showEditor: false,
           code: 1271
-        }); 
+        });
       }
       if (dna.residency.value < 0) {
         throw new ModelError("State residency cannot be less than 0.", {
           primitive: node,
           showEditor: false,
           code: 1272
-        }); 
+        });
       }
     }
   } else if (node instanceof Stock) {
@@ -1287,9 +1272,6 @@ function getDNA(node, submodel, solvers, simulate) {
       dna.stockType = "Conveyor";
       try {
         dna.delay = evaluateTree(trimTree(createTree(node.delay, "p:" + node.id + ":delay", simulate), new Map(), simulate), new Map(), simulate);
-        if (!dna.delay.units) {
-          dna.delay.units = simulate.timeUnits;
-        }
       } catch (err) {
         throw new ModelError("Invalid stock delay.", {
           primitive: node,
@@ -1332,28 +1314,11 @@ function getDNA(node, submodel, solvers, simulate) {
     /** @type {Material[]} */
     let out = [];
 
-    /** @type {import('./formula/Units').UnitStore} */
-    let myU;
-
-    if (node.input === "Time") {
-      myU = simulate.timeUnits;
-    } else {
-      let sourcePrimitive = node.input;
-      if (sourcePrimitive) {
-        myU = createUnitStore(sourcePrimitive.units, simulate, node);
-      } else {
-        throw new ModelError(`The converter <i>[${toHTML(dna.name)}]</i> does not have a source.`, {
-          primitive: node,
-          showEditor: true,
-          code: 1019
-        });
-      }
-    }
-
+    // Units are display-only: converter inputs/outputs are plain numbers
     dna.source = node.input === "Time" ? node.input : node.input.id;
 
     for (let i = 0; i < data.length; i++) {
-      inp.push(new Material(data[i].x, myU));
+      inp.push(new Material(data[i].x));
       out.push(new Material(data[i].y));
     }
     dna.inputs = inp;
@@ -1361,27 +1326,9 @@ function getDNA(node, submodel, solvers, simulate) {
   }
 
   if (node instanceof ValuedPrimitive) {
-    if (!(node instanceof Transition) && !(node instanceof Action)) {
-      let u = node.units;
-      try {
-        if (!(node instanceof Flow) || (u && u.trim() && u.trim().toLowerCase() !== "unitless")) {
-          dna.units = createUnitStore(u, simulate, node);
-        } else {
-          dna.units = simulate.timeUnits.power(-1);
-          dna.flowUnitless = true;
-        }
-      } catch (err) {
-        throw new ModelError(`Invalid units specified for primitive: "<i>${toHTML(u)}</i>"`, {
-          primitive: node,
-          showEditor: true,
-          code: 1020
-        });
-      }
-    } else {
-      if (dna.trigger === "Timeout") {
-        dna.units = simulate.timeUnits;
-      }
-    }
+    // Units are display-only: stored as raw string for UI, not used in calculations
+    dna.unitDisplayString = node.units || "";
+
     let constraints = node.constraints;
     dna.maxConstraint = constraints.max;
     dna.useMaxConstraint = "max" in constraints;
@@ -1390,12 +1337,7 @@ function getDNA(node, submodel, solvers, simulate) {
 
   }
 
-  if (dna.units) {
-    dna.units.addBase();
-    dna.toBase = dna.units.toBase;
-  }
-
-  dna.unitless = !dna.units;
+  dna.unitless = true;
 
   return dna;
 }

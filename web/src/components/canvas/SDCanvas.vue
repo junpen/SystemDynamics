@@ -6,21 +6,35 @@
     :y="ctxMenu.y"
     :menuType="ctxMenu.type"
     :pasteDisabled="!hasClipboard"
+    :canGroup="ctxMenu.canGroup"
+    :groupCollapsed="ctxMenu.groupCollapsed"
     @close="ctxMenu.visible = false"
     @copy="handleCopy"
     @paste="handlePaste"
     @delete="handleDelete"
     @reverse="handleReverse"
+    @view-chart="handleViewChart"
     @sign-start-plus="handleSign('start', '+')"
     @sign-start-minus="handleSign('start', '-')"
     @sign-end-plus="handleSign('end', '+')"
     @sign-end-minus="handleSign('end', '-')"
+    @create-group="handleCreateGroupAction"
+    @toggle-group="handleToggleGroup"
+    @ungroup="handleUngroup"
+    @rename-group="handleRenameGroup"
   />
+  <GroupDialog
+    v-model:visible="groupDialogVisible"
+    :nodes="groupDialogNodes"
+    :position="groupDialogPos"
+    @create="handleCreateGroupConfirm"
+  />
+  <ElementChartDialog ref="elementChartRef" />
 </template>
 
 <script setup>
 import { ref, onMounted, onUnmounted, nextTick, watch } from 'vue';
-import { ElMessage } from 'element-plus';
+import { ElMessage, ElMessageBox } from 'element-plus';
 import { Graph } from '@antv/x6';
 
 import { Selection } from '@antv/x6-plugin-selection';
@@ -29,10 +43,14 @@ import { Keyboard } from '@antv/x6-plugin-keyboard';
 import { History } from '@antv/x6-plugin-history';
 import './shapes.js';
 import { SHAPE_MAP, COLORS, NODE_TYPES } from '../../utils/constants.js';
+import { LABELS } from '../../utils/constants.js';
 import { useModelStore } from '../../stores/model.js';
 import { useEditorStore } from '../../stores/editor.js';
+import { useSimulationStore } from '../../stores/simulation.js';
 import { modelJSONToGraph } from '../../utils/modelJSONAdapter.js';
 import ContextMenu from './ContextMenu.vue';
+import GroupDialog from './GroupDialog.vue';
+import ElementChartDialog from './ElementChartDialog.vue';
 
 const containerRef = ref(null);
 let graph = null;
@@ -42,10 +60,15 @@ let clipboard = null;
 let _loading = false;
 const hasClipboard = ref(false);
 
-const ctxMenu = ref({ visible: false, x: 0, y: 0, type: 'node', cell: null });
+const ctxMenu = ref({ visible: false, x: 0, y: 0, type: 'node', cell: null, canGroup: false, groupCollapsed: false });
+const groupDialogVisible = ref(false);
+const groupDialogNodes = ref([]);
+const groupDialogPos = ref({ x: 0, y: 0, width: 300, height: 200 });
+const elementChartRef = ref(null);
 
 const modelStore = useModelStore();
 const editorStore = useEditorStore();
+const simStore = useSimulationStore();
 
 const emit = defineEmits(['ready', 'node-click', 'edge-click', 'blank-click', 'history-change']);
 
@@ -94,6 +117,21 @@ function clearEdgeSelection() {
 }
 
 // --- Context menu actions ---
+
+function handleViewChart() {
+  const cell = ctxMenu.value.cell;
+  if (!cell) return;
+  const data = cell.getData();
+  if (!data || data.elementIndex < 0) return;
+  const el = modelStore.modelJSON.elements[data.elementIndex];
+  if (!el?.name) return;
+
+  if (!simStore.results?.series || !(el.name in simStore.results.series)) {
+    ElMessage.warning('暂无该元素的模拟结果，请先运行模拟');
+    return;
+  }
+  elementChartRef.value?.open(el.name);
+}
 
 function handleCopy() {
   const cell = ctxMenu.value.cell;
@@ -211,7 +249,12 @@ function handleDelete() {
   const cell = ctxMenu.value.cell;
   if (!cell) return;
   const data = cell.getData();
-  if (!data || data.elementIndex < 0) return;
+  if (!data) return;
+  if (data.isGroup) {
+    handleDeleteGroup(cell);
+    return;
+  }
+  if (data.elementIndex < 0) return;
   if (cell === selectedEdge) selectedEdge = null;
   modelStore.removeElement(data.elementIndex);
 }
@@ -318,6 +361,242 @@ function makeSignLabel(sign, position, id) {
 
 let stockFlowTipShown = false;
 
+// --- Group functions ---
+
+function handleCreateGroupAction() {
+  const selectedCells = graph.getSelectedCells().filter(c => {
+    if (!c.isNode()) return false;
+    const data = c.getData();
+    return data && !data.isCloud && !data.isGroup;
+  });
+
+  // Always include the right-clicked source node
+  const sourceCell = ctxMenu.value.cell;
+  const allCells = [...selectedCells];
+  if (sourceCell && sourceCell.isNode() && !sourceCell.getData()?.isCloud && !sourceCell.getData()?.isGroup && !allCells.some(c => c.id === sourceCell.id)) {
+    allCells.push(sourceCell);
+  }
+
+  if (allCells.length < 2) {
+    ElMessage.warning('请选择至少两个节点来创建分组');
+    return;
+  }
+
+  // Find connected cloud nodes to include in the group
+  const cloudNodes = [];
+  const cloudIds = new Set();
+  for (const node of allCells) {
+    const edges = graph.getConnectedEdges(node);
+    for (const edge of edges) {
+      const src = edge.getSourceCell();
+      const tgt = edge.getTargetCell();
+      if (src?.getData()?.isCloud && !cloudIds.has(src.id) && !allCells.some(c => c.id === src.id)) {
+        cloudIds.add(src.id);
+        cloudNodes.push(src);
+      }
+      if (tgt?.getData()?.isCloud && !cloudIds.has(tgt.id) && !allCells.some(c => c.id === tgt.id)) {
+        cloudIds.add(tgt.id);
+        cloudNodes.push(tgt);
+      }
+    }
+  }
+  const allCellsIncludingClouds = [...allCells, ...cloudNodes];
+
+  // Calculate bounding box in screen coordinates for the frame overlay
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  for (const node of allCellsIncludingClouds) {
+    const pos = node.getPosition();
+    const size = node.getSize();
+    minX = Math.min(minX, pos.x);
+    minY = Math.min(minY, pos.y);
+    maxX = Math.max(maxX, pos.x + size.width);
+    maxY = Math.max(maxY, pos.y + size.height);
+  }
+  const padding = 30;
+  const headerH = 36;
+  const tl = graph.localToClient(minX - padding, minY - padding - headerH);
+  const br = graph.localToClient(maxX + padding, maxY + padding);
+  groupDialogPos.value = {
+    x: tl.x,
+    y: tl.y,
+    width: Math.max(br.x - tl.x, 280),
+    height: Math.max(br.y - tl.y, 120),
+  };
+
+  groupDialogNodes.value = allCellsIncludingClouds.map(cell => {
+    const data = cell.getData();
+    const type = data.primitiveType;
+    const el = modelStore.elements[data.elementIndex];
+    return {
+      id: cell.id,
+      name: el?.name || cell.getProp('label') || '',
+      typeLabel: LABELS[type] || type,
+      color: COLORS[type]?.stroke || '#666',
+      included: true,
+    };
+  });
+  groupDialogVisible.value = true;
+}
+
+function handleCreateGroupConfirm({ name, color, nodeIds }) {
+  if (!graph || nodeIds.length === 0) return;
+  const childNodes = nodeIds.map(id => graph.getCellById(id)).filter(Boolean);
+  if (childNodes.length === 0) return;
+  createGroupOnCanvas(childNodes, name, color);
+}
+
+function getGroupChildren(groupNode) {
+  const data = groupNode.getData();
+  if (!data || !data.childIds) return [];
+  return data.childIds.map(id => graph.getCellById(id)).filter(Boolean);
+}
+
+function createGroupOnCanvas(childNodes, name = '分组', color = '#818cf8') {
+  if (!graph || childNodes.length === 0) return;
+
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  for (const node of childNodes) {
+    const pos = node.getPosition();
+    const size = node.getSize();
+    minX = Math.min(minX, pos.x);
+    minY = Math.min(minY, pos.y);
+    maxX = Math.max(maxX, pos.x + size.width);
+    maxY = Math.max(maxY, pos.y + size.height);
+  }
+
+  const padding = 30;
+  const headerHeight = 36;
+  const groupX = minX - padding;
+  const groupY = minY - padding - headerHeight;
+  const groupWidth = maxX - minX + padding * 2;
+  const groupHeight = maxY - minY + padding * 2 + headerHeight;
+
+  const groupNode = graph.addNode({
+    shape: 'sd:group',
+    x: groupX,
+    y: groupY,
+    width: groupWidth,
+    height: groupHeight,
+    attrs: {
+      body: { fill: color + '18', stroke: color },
+      headerBg: { fill: color },
+    },
+    data: {
+      isGroup: true,
+      collapsed: false,
+      expandedSize: { width: groupWidth, height: groupHeight },
+      childIds: childNodes.map(n => n.id),
+    },
+  });
+  groupNode.setAttrByPath('headerLabel/text', name);
+  groupNode.setAttrByPath('toggleIcon/text', '▼');
+
+  // No parent-child, just send group to back so children stay on top
+  groupNode.setProp('zIndex', -1);
+  groupNode.toBack();
+
+  return groupNode;
+}
+
+function toggleGroup(groupNode) {
+  const data = groupNode.getData();
+  if (data.collapsed) {
+    expandGroup(groupNode);
+  } else {
+    collapseGroup(groupNode);
+  }
+}
+
+function collapseGroup(groupNode) {
+  const data = groupNode.getData();
+  const children = getGroupChildren(groupNode);
+  const size = groupNode.getSize();
+
+  for (const child of children) {
+    child.setVisible(false);
+    const edges = graph.getConnectedEdges(child);
+    for (const edge of edges) {
+      edge.setVisible(false);
+    }
+  }
+
+  groupNode.setSize(size.width, 40);
+  groupNode.setData({ ...data, collapsed: true, expandedSize: { width: size.width, height: size.height } });
+  groupNode.setAttrByPath('toggleIcon/text', '▶');
+}
+
+function expandGroup(groupNode) {
+  const data = groupNode.getData();
+  const children = getGroupChildren(groupNode);
+
+  groupNode.setSize(data.expandedSize.width, data.expandedSize.height);
+
+  for (const child of children) {
+    child.setVisible(true);
+    const edges = graph.getConnectedEdges(child);
+    for (const edge of edges) {
+      edge.setVisible(true);
+    }
+  }
+
+  groupNode.setData({ ...data, collapsed: false });
+  groupNode.setAttrByPath('toggleIcon/text', '▼');
+}
+
+function handleToggleGroup() {
+  const groupNode = ctxMenu.value.cell;
+  if (!groupNode) return;
+  toggleGroup(groupNode);
+}
+
+function handleUngroup() {
+  const groupNode = ctxMenu.value.cell;
+  if (!groupNode) return;
+  const data = groupNode.getData();
+  if (data.collapsed) expandGroup(groupNode);
+
+  // Just remove the group node, children keep their absolute positions
+  graph.removeCell(groupNode);
+}
+
+function handleDeleteGroup(groupNode) {
+  const data = groupNode.getData();
+  if (data.collapsed) expandGroup(groupNode);
+
+  const children = getGroupChildren(groupNode);
+  graph.removeCell(groupNode);
+
+  // Remove cloud children from graph (non-cloud children handled via removeElement)
+  for (const child of children) {
+    if (child.getData()?.isCloud) {
+      graph.removeCell(child);
+    }
+  }
+
+  const indices = children
+    .map(c => c.getData()?.elementIndex)
+    .filter(idx => idx != null && idx >= 0);
+  indices.sort((a, b) => b - a);
+  for (const idx of indices) {
+    modelStore.removeElement(idx);
+  }
+}
+
+function handleRenameGroup() {
+  const groupNode = ctxMenu.value.cell;
+  if (!groupNode) return;
+  const currentName = groupNode.getAttrByPath('headerLabel/text') || '';
+  ElMessageBox.prompt('请输入新的分组名称', '重命名分组', {
+    inputValue: currentName,
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+  }).then(({ value }) => {
+    if (value.trim()) {
+      groupNode.setAttrByPath('headerLabel/text', value.trim());
+    }
+  }).catch(() => {});
+}
+
 function initGraph() {
   graph = new Graph({
     container: containerRef.value,
@@ -359,6 +638,8 @@ function initGraph() {
       },
       validateConnection({ sourceCell, targetCell }) {
         if (!sourceCell) return false;
+        if (sourceCell.getData()?.isGroup) return false;
+        if (targetCell?.getData()?.isGroup) return false;
         if (!targetCell) return true;
         // LINK target must be STOCK, VARIABLE, or FLOW
         if (editorStore.currentEdgeType === 'LINK') {
@@ -377,7 +658,7 @@ function initGraph() {
     }
   });
 
-  graph.use(new Selection({ enabled: true, showNodeSelectionBox: true }));
+  graph.use(new Selection({ enabled: true, rubberband: { enabled: true, modifiers: ['ctrl'] }, showNodeSelectionBox: true }));
   graph.use(new Snapline({ enabled: true }));
   graph.use(new Keyboard({ enabled: true }));
   historyPlugin = new History({ enabled: true });
@@ -389,8 +670,17 @@ function initGraph() {
   });
 
   // Events
-  graph.on('node:click', ({ node }) => {
+  graph.on('node:click', ({ node, e }) => {
     const data = node.getData();
+    if (data?.isGroup) {
+      const nodePos = node.getPosition();
+      const clickLocal = graph.clientToLocal(e.clientX, e.clientY);
+      const relativeY = clickLocal.y - nodePos.y;
+      if (relativeY <= 32) {
+        toggleGroup(node);
+      }
+      return;
+    }
     if (data && !data.isCloud) {
       clearEdgeSelection();
       editorStore.selectElement(data.elementIndex);
@@ -422,10 +712,20 @@ function initGraph() {
   graph.on('node:contextmenu', ({ node, e }) => {
     if (e) e.preventDefault();
     const data = node.getData();
-    if (!data || data.isCloud) return;
+    if (!data) return;
     const clientX = e?.clientX ?? 0;
     const clientY = e?.clientY ?? 0;
-    ctxMenu.value = { visible: true, x: clientX, y: clientY, type: 'node', cell: node };
+
+    if (data.isGroup) {
+      ctxMenu.value = { visible: true, x: clientX, y: clientY, type: 'group', cell: node, canGroup: false, groupCollapsed: !!data.collapsed };
+      return;
+    }
+
+    if (data.isCloud) return;
+
+    const selectedCells = graph.getSelectedCells().filter(c => c.isNode() && !c.getData()?.isCloud && !c.getData()?.isGroup);
+    const canGroup = selectedCells.length >= 1;
+    ctxMenu.value = { visible: true, x: clientX, y: clientY, type: 'node', cell: node, canGroup, groupCollapsed: false };
   });
 
   graph.on('edge:contextmenu', ({ edge, e }) => {
@@ -446,10 +746,22 @@ function initGraph() {
 
   graph.on('cell:click', () => { ctxMenu.value.visible = false; });
 
-  graph.on('node:change:position', ({ node }) => {
+  graph.on('node:change:position', ({ node, current, previous }) => {
     if (_loading) return;
     const data = node.getData();
     if (!data) return;
+    if (data.isGroup) {
+      // Move all children with the group
+      if (!previous) return;
+      const dx = current.x - previous.x;
+      const dy = current.y - previous.y;
+      const children = getGroupChildren(node);
+      for (const child of children) {
+        const pos = child.getPosition();
+        child.setPosition(pos.x + dx, pos.y + dy);
+      }
+      return;
+    }
     if (data.isCloud) {
       modelStore.dirty = true;
       return;
@@ -558,10 +870,25 @@ function initGraph() {
   graph.bindKey(['delete', 'backspace'], () => {
     const cells = graph.getSelectedCells();
     if (cells.length) {
-      // Separate cloud cells from regular cells
+      // Collect children of selected groups to skip them
+      const childIds = new Set();
+      for (const cell of cells) {
+        if (cell.getData()?.isGroup) {
+          const children = getGroupChildren(cell);
+          for (const child of children) {
+            childIds.add(child.id);
+          }
+        }
+      }
+
       const indices = [];
       for (const cell of cells) {
+        if (childIds.has(cell.id)) continue;
         const data = cell.getData();
+        if (data?.isGroup) {
+          handleDeleteGroup(cell);
+          continue;
+        }
         if (cell.isEdge() && cell === selectedEdge) {
           selectedEdge = null;
         }
@@ -571,7 +898,6 @@ function initGraph() {
           indices.push(data.elementIndex);
         }
       }
-      // Sort descending so deletions don't shift indices
       indices.sort((a, b) => b - a);
       for (const idx of indices) {
         modelStore.removeElement(idx);
@@ -784,7 +1110,7 @@ function syncPositionsToStore() {
   // Sync regular node positions
   for (const node of graph.getNodes()) {
     const data = node.getData();
-    if (!data || data.elementIndex < 0 || data.isCloud) continue;
+    if (!data || data.elementIndex < 0 || data.isCloud || data.isGroup) continue;
     const pos = node.getPosition();
     modelStore.updateElement(data.elementIndex, {
       display: { coordinates: [Math.round(pos.x), Math.round(pos.y)] }
@@ -796,7 +1122,6 @@ function syncPositionsToStore() {
     if (!data || !data.isCloud) continue;
     const pos = node.getPosition();
     const cloudCoords = [Math.round(pos.x + 15), Math.round(pos.y + 11)];
-    // Find edges connected to this cloud
     for (const edge of graph.getEdges()) {
       const edgeData = edge.getData();
       if (!edgeData || edgeData.elementIndex < 0) continue;
@@ -811,6 +1136,27 @@ function syncPositionsToStore() {
       }
     }
   }
+  // Sync groups
+  const groups = [];
+  for (const node of graph.getNodes()) {
+    const data = node.getData();
+    if (!data?.isGroup) continue;
+    const childIds = data.childIds || [];
+    const childNames = childIds.map(id => {
+      const child = graph.getCellById(id);
+      if (!child) return null;
+      const childData = child.getData();
+      if (!childData || childData.elementIndex < 0) return null;
+      return modelStore.modelJSON.elements[childData.elementIndex]?.name;
+    }).filter(Boolean);
+    groups.push({
+      name: node.getAttrByPath('headerLabel/text') || '',
+      color: node.getAttrByPath('headerBg/fill') || '#818cf8',
+      collapsed: data.collapsed || false,
+      childNames,
+    });
+  }
+  modelStore.modelJSON.groups = groups;
 }
 
 function undo() {

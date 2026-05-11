@@ -25,23 +25,23 @@
 
 <script setup>
 import { computed } from 'vue';
-import { CopyDocument, DocumentCopy, Delete, Sort, CirclePlus, Remove } from '@element-plus/icons-vue';
+import { CopyDocument, DocumentCopy, Delete, Sort, CirclePlus, Remove, FolderAdd, EditPen, Fold, Expand, TrendCharts } from '@element-plus/icons-vue';
 
 const props = defineProps({
   visible: Boolean,
   x: { type: Number, default: 0 },
   y: { type: Number, default: 0 },
   menuType: { type: String, default: 'node' },
-  pasteDisabled: { type: Boolean, default: true }
+  pasteDisabled: { type: Boolean, default: true },
+  canGroup: { type: Boolean, default: false },
+  groupCollapsed: { type: Boolean, default: false },
 });
 
-const emit = defineEmits(['close', 'copy', 'paste', 'delete', 'reverse', 'sign-start-plus', 'sign-start-minus', 'sign-end-plus', 'sign-end-minus']);
-
-const nodeItems = [
-  { action: 'copy', label: '复制', icon: CopyDocument },
-  { action: 'paste', label: '粘贴', icon: DocumentCopy },
-  { action: 'delete', label: '删除', icon: Delete, danger: true }
-];
+const emit = defineEmits([
+  'close', 'copy', 'paste', 'delete', 'reverse', 'view-chart',
+  'sign-start-plus', 'sign-start-minus', 'sign-end-plus', 'sign-end-minus',
+  'create-group', 'toggle-group', 'ungroup', 'rename-group'
+]);
 
 const blankItems = [
   { action: 'paste', label: '粘贴', icon: DocumentCopy }
@@ -52,16 +52,40 @@ const edgeItems = [
   { action: 'delete', label: '删除', icon: Delete, danger: true },
   { action: 'reverse', label: '反转箭头', icon: Sort },
   { divider: true },
+  { action: 'view-chart', label: '查看模拟结果', icon: TrendCharts },
+  { divider: true },
   { action: 'sign-start-plus', label: '起始位置 + 号', icon: CirclePlus },
   { action: 'sign-start-minus', label: '起始位置 - 号', icon: Remove },
   { action: 'sign-end-plus', label: '结束位置 + 号', icon: CirclePlus },
   { action: 'sign-end-minus', label: '结束位置 - 号', icon: Remove }
 ];
 
+const groupItems = computed(() => [
+  { action: 'rename-group', label: '重命名分组', icon: EditPen },
+  { action: 'toggle-group', label: props.groupCollapsed ? '展开分组' : '折叠分组', icon: props.groupCollapsed ? Expand : Fold },
+  { action: 'ungroup', label: '取消分组', icon: Remove },
+  { divider: true },
+  { action: 'delete', label: '删除', icon: Delete, danger: true },
+]);
+
 const menuItems = computed(() => {
   if (props.menuType === 'edge') return edgeItems;
   if (props.menuType === 'blank') return blankItems;
-  return nodeItems;
+  if (props.menuType === 'group') return groupItems.value;
+
+  const items = [
+    { action: 'copy', label: '复制', icon: CopyDocument },
+    { action: 'paste', label: '粘贴', icon: DocumentCopy },
+    { divider: true },
+    { action: 'view-chart', label: '查看模拟结果', icon: TrendCharts },
+  ];
+  if (props.canGroup) {
+    items.push({ divider: true });
+    items.push({ action: 'create-group', label: '创建分组', icon: FolderAdd });
+  }
+  items.push({ divider: true });
+  items.push({ action: 'delete', label: '删除', icon: Delete, danger: true });
+  return items;
 });
 
 function handleAction(action) {
