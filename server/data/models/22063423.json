@@ -35,7 +35,7 @@
       "behavior": {
         "initial_value": 100,
         "non_negative": true,
-        "units": "万人"
+        "units": ""
       },
       "display": {
         "coordinates": [
@@ -54,7 +54,7 @@
       "behavior": {
         "initial_value": 50,
         "non_negative": true,
-        "units": "万件"
+        "units": "万"
       },
       "display": {
         "coordinates": [
@@ -73,7 +73,7 @@
       "behavior": {
         "initial_value": 10,
         "non_negative": true,
-        "units": "战力"
+        "units": ""
       },
       "display": {
         "coordinates": [
@@ -109,7 +109,7 @@
       "name": "国防投入比",
       "behavior": {
         "value": "0.02",
-        "units": "1/Year"
+        "units": ""
       },
       "display": {
         "coordinates": [
@@ -127,7 +127,7 @@
       "name": "人员经费率",
       "behavior": {
         "value": "0.012",
-        "units": "1/Year"
+        "units": ""
       },
       "display": {
         "coordinates": [
@@ -145,7 +145,7 @@
       "name": "人员投入率",
       "behavior": {
         "value": "0.012",
-        "units": "万人 per 万元 per Year"
+        "units": ""
       },
       "display": {
         "coordinates": [
@@ -163,7 +163,7 @@
       "name": "退役率",
       "behavior": {
         "value": "0.1",
-        "units": "1/Year"
+        "units": ""
       },
       "display": {
         "coordinates": [
@@ -181,7 +181,7 @@
       "name": "装备经费率",
       "behavior": {
         "value": "0.006",
-        "units": "1/Year"
+        "units": ""
       },
       "display": {
         "coordinates": [
@@ -199,7 +199,7 @@
       "name": "装备投入率",
       "behavior": {
         "value": "0.006",
-        "units": "万件 per 万元 per Year"
+        "units": ""
       },
       "display": {
         "coordinates": [
@@ -217,7 +217,7 @@
       "name": "淘汰率",
       "behavior": {
         "value": "0.06",
-        "units": "1/Year"
+        "units": ""
       },
       "display": {
         "coordinates": [
@@ -235,7 +235,7 @@
       "name": "战力衰减率",
       "behavior": {
         "value": "0.15",
-        "units": "1/Year"
+        "units": ""
       },
       "display": {
         "coordinates": [
@@ -255,7 +255,7 @@
         "input": "ELEMENT",
         "input_element": "军事人员",
         "interpolation": "LINEAR",
-        "units": "战力 per 万人 per Year",
+        "units": "",
         "data": [
           [
             0,
@@ -309,7 +309,7 @@
         "input": "ELEMENT",
         "input_element": "武器装备",
         "interpolation": "LINEAR",
-        "units": "战力 per 万件 per Year",
+        "units": "",
         "data": [
           [
             0,
@@ -400,7 +400,7 @@
       "behavior": {
         "value": "[经济总量] * [国防投入比]",
         "non_negative": false,
-        "units": "万元 per Year"
+        "units": ""
       },
       "display": {
         "from_coordinates": [
@@ -417,7 +417,7 @@
       "behavior": {
         "value": "[国防经费] * [人员经费率]",
         "non_negative": false,
-        "units": "万元 per Year"
+        "units": ""
       },
       "display": {
         "to_coordinates": [
@@ -434,7 +434,7 @@
       "behavior": {
         "value": "[国防经费] * [人员投入率]",
         "non_negative": false,
-        "units": "万人 per Year"
+        "units": ""
       },
       "display": {
         "from_coordinates": [
@@ -451,7 +451,7 @@
       "behavior": {
         "value": "[军事人员] * [退役率]",
         "non_negative": false,
-        "units": "万人 per Year"
+        "units": ""
       },
       "display": {
         "to_coordinates": [
@@ -468,7 +468,7 @@
       "behavior": {
         "value": "[国防经费] * [装备经费率]",
         "non_negative": false,
-        "units": "万元 per Year"
+        "units": ""
       },
       "display": {
         "to_coordinates": [
@@ -485,7 +485,7 @@
       "behavior": {
         "value": "[国防经费] * [装备投入率]",
         "non_negative": false,
-        "units": "万件 per Year"
+        "units": ""
       },
       "display": {
         "from_coordinates": [
@@ -502,7 +502,7 @@
       "behavior": {
         "value": "[武器装备] * [淘汰率]",
         "non_negative": false,
-        "units": "万件 per Year"
+        "units": ""
       },
       "display": {
         "to_coordinates": [
@@ -519,7 +519,7 @@
       "behavior": {
         "value": "([训练效能] * [军事人员] + [装备效能] * [武器装备]) * [战略态势因子]",
         "non_negative": false,
-        "units": "战力 per Year"
+        "units": ""
       },
       "display": {
         "from_coordinates": [
@@ -536,7 +536,7 @@
       "behavior": {
         "value": "[战斗力] * [战力衰减率]",
         "non_negative": false,
-        "units": "战力 per Year"
+        "units": ""
       },
       "display": {
         "to_coordinates": [
@@ -741,7 +741,7 @@
     "id": "22063423",
     "name": "军队建设发展模型",
     "description": "展示国防经费、军事人员、武器装备与战斗力之间的系统动力学关系，模拟军队从经费投入到战力生成的完整过程。所有存量、流量、变量和转换器均设置了物理单位（万元、万人、万件、战力、1/年等），仿真引擎会自动检查单位一致性。跨领域流量（如经费→人员）拆分为独立的流出和流入，以保持单位维度一致。",
-    "updatedAt": "2026-05-11T06:20:47.769Z",
+    "updatedAt": "2026-05-12T03:52:49.820Z",
     "createdAt": "2026-05-11T06:15:00.628Z"
   }
 }

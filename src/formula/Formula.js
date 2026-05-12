@@ -1346,9 +1346,8 @@ export function negate(x) {
   if (x instanceof Vector) {
     return /** @type {any} */ (x.cloneApply(negate));
   } else if (x instanceof Material) {
-    return /** @type {any} */ (new Material(fn["-"](x.value), x.units));
+    return /** @type {any} */ (new Material(fn["-"](x.value)));
   }
-
 
   if (typeof x === "boolean") {
     throw new ModelError("Cannot convert Booleans to Numbers.", {
@@ -1486,16 +1485,8 @@ export function neq(lhs, rhs, lhsNode, rhsNode) {
     return lhs !== rhs;
   }
 
-  let scale = 1;
-  if (lhs.units !== rhs.units) {
-    scale = convertUnits(rhs.units, lhs.units);
-    if (scale === 0) {
-      // Units are display-only: fall back to raw value comparison instead of error
-      return !fn["="](lhs.value, rhs.value);
-    }
-  }
-
-  return !fn["="](lhs.value, scale === 1 ? rhs.value : fn["*"](rhs.value, scale));
+  // 单位仅用于展示，不进行单位转换
+  return !fn["="](lhs.value, rhs.value);
 }
 
 /**
@@ -1549,17 +1540,8 @@ export function eq(lhs, rhs, lhsNode, rhsNode, allowVectorReturn=false) {
     return lhs === rhs;
   }
 
-  let scale = 1;
-  if (lhs.units !== rhs.units) {
-    scale = convertUnits(rhs.units, lhs.units);
-    if (scale === 0) {
-      // Units are display-only: fall back to raw value comparison instead of error
-      return fn["="](lhs.value, rhs.value);
-    }
-  }
-
-
-  return fn["="](lhs.value, scale === 1 ? rhs.value : fn["*"](rhs.value, scale));
+  // 单位仅用于展示，不进行单位转换
+  return fn["="](lhs.value, rhs.value);
 }
 
 function comparisonValid(lhs, rhs) {
@@ -1610,17 +1592,8 @@ export function lessThan(lhs, rhs, lhsNode, rhsNode) {
   } else if (rhs instanceof Vector) {
     return rhs.cloneCombine(lhs, lessThan, true);
   } else if (lhs instanceof Material && rhs instanceof Material) {
-
-    let scale = 1;
-    if (lhs.units !== rhs.units) {
-      scale = convertUnits(rhs.units, lhs.units);
-      if (scale === 0) {
-        // Units are display-only: fall back to raw value comparison instead of error
-        return fn["<"](lhs.value, rhs.value);
-      }
-    }
-
-    return fn["<"](lhs.value, scale === 1 ? rhs.value : fn["*"](scale, rhs.value));
+    // 单位仅用于展示，不进行单位转换
+    return fn["<"](lhs.value, rhs.value);
   }
 
   throw new ModelError("Invalid type - lessThan", {
@@ -1658,18 +1631,8 @@ export function lessThanEq(lhs, rhs, lhsNode, rhsNode) {
   } else if (rhs instanceof Vector) {
     return rhs.cloneCombine(lhs, lessThanEq, true);
   } else if (lhs instanceof Material && rhs instanceof Material) {
-
-  
-    let scale = 1;
-    if (lhs.units !== rhs.units) {
-      scale = convertUnits(rhs.units, lhs.units);
-      if (scale === 0) {
-        // Units are display-only: fall back to raw value comparison instead of error
-        return fn["<="](lhs.value, rhs.value);
-      }
-    }
-
-    return fn["<="](lhs.value, scale === 1 ? rhs.value : fn["*"](scale, rhs.value));
+    // 单位仅用于展示，不进行单位转换
+    return fn["<="](lhs.value, rhs.value);
   }
 
   throw new ModelError("Invalid type - lessThanEq", {
@@ -1706,17 +1669,8 @@ export function greaterThan(lhs, rhs, lhsNode, rhsNode) {
   } else if (rhs instanceof Vector) {
     return rhs.cloneCombine(lhs, greaterThan, true);
   } else if (lhs instanceof Material && rhs instanceof Material) {
-
-    let scale = 1;
-    if (lhs.units !== rhs.units) {
-      scale = convertUnits(rhs.units, lhs.units);
-      if (scale === 0) {
-        // Units are display-only: fall back to raw value comparison instead of error
-        return fn[">"](lhs.value, rhs.value);
-      }
-    }
-
-    return fn[">"](lhs.value, scale === 1 ? rhs.value : fn["*"](scale, rhs.value));
+    // 单位仅用于展示，不进行单位转换
+    return fn[">"](lhs.value, rhs.value);
   }
 
   throw new ModelError("Invalid type - greaterThan", {
@@ -1753,17 +1707,8 @@ export function greaterThanEq(lhs, rhs, lhsNode, rhsNode) {
   } else if (rhs instanceof Vector) {
     return rhs.cloneCombine(lhs, greaterThanEq, true);
   } else if (lhs instanceof Material && rhs instanceof Material) {
-
-    let scale = 1;
-    if (lhs.units !== rhs.units) {
-      scale = convertUnits(rhs.units, lhs.units);
-      if (scale === 0) {
-        // Units are display-only: fall back to raw value comparison instead of error
-        return fn[">="](lhs.value, rhs.value);
-      }
-    }
-
-    return fn[">="](lhs.value, scale === 1 ? rhs.value : fn["*"](scale, rhs.value));
+    // 单位仅用于展示，不进行单位转换
+    return fn[">="](lhs.value, rhs.value);
   }
 
   throw new ModelError("Invalid type - greaterThanEq", {
@@ -1803,25 +1748,10 @@ export function plus(lhs, rhs, lhsNode, rhsNode) {
   } else if (rhs instanceof Vector) {
     return rhs.cloneCombine(lhs, plus, true);
   } else if (lhs instanceof Material && rhs instanceof Material) {
-
-    let explicitUnits = true;
-    let scale = 1;
-    if (lhs.units !== rhs.units) {
-      scale = convertUnits(rhs.units, lhs.units, true);
-      if (scale === 0) {
-        // Units are display-only: add raw values instead of error
-        return /** @type {any} */ (new Material(
-          fn["+"](lhs.value, rhs.value)
-        ));
-      } else if (scale !== 1) {
-        explicitUnits = false;
-      }
-    }
-
+    // 单位仅用于展示，不进行单位转换
     return /** @type {any} */ (new Material(
-      fn["+"](lhs.value, scale === 1 ? rhs.value : fn["*"](rhs.value, scale)),
-      lhs.units,
-      explicitUnits && lhs.explicitUnits && rhs.explicitUnits
+      fn["+"](lhs.value, rhs.value),
+      lhs.units
     ));
   }
 
@@ -1880,26 +1810,10 @@ export function minus(lhs, rhs, lhsNode, rhsNode) {
   } else if (rhs instanceof Vector) {
     return rhs.cloneCombine(lhs, minus, true);
   } else if (lhs instanceof Material && rhs instanceof Material) {
-
-    let explicitUnits = true;
-    let scale = 1;
-    if (lhs.units !== rhs.units) {
-      scale = convertUnits(rhs.units, lhs.units, true);
-      if (scale === 0) {
-        // Units are display-only: subtract raw values instead of error
-        return /** @type {any} */ (new Material(
-          fn["-"](lhs.value, rhs.value)
-        ));
-      } else if (scale !== 1) {
-        explicitUnits = false;
-      }
-    }
-
-
+    // 单位仅用于展示，不进行单位转换
     return /** @type {any} */ (new Material(
-      fn["-"](lhs.value, scale === 1 ? rhs.value : fn["*"](rhs.value, scale)),
-      lhs.units,
-      explicitUnits && lhs.explicitUnits && rhs.explicitUnits
+      fn["-"](lhs.value, rhs.value),
+      lhs.units
     ));
   }
 
@@ -1950,30 +1864,11 @@ export function mult(lhs, rhs) {
   } else if (rhs instanceof Vector) {
     return rhs.cloneCombine(lhs, mult, true);
   } else if (lhs instanceof Material && rhs instanceof Material) {
-    let x = fn["*"](lhs.value, rhs.value);
-
-    if (lhs.units && rhs.units) {
-      let [scale, newUnits, explicit] = lhs.units.multiply(rhs.units, true);
-      if (scale === 1) {
-        return /** @type {any} */ (new Material(
-          x,
-          newUnits,
-          explicit && lhs.explicitUnits && rhs.explicitUnits 
-        ));
-      } else {
-        return /** @type {any} */ (new Material(
-          fn["*"](x, scale),
-          newUnits,
-          explicit && lhs.explicitUnits && rhs.explicitUnits 
-        ));
-      }
-    } else if (lhs.units) {
-      return /** @type {any} */ (new Material(x, lhs.units));
-    } else if (rhs.units) {
-      return /** @type {any} */ (new Material(x, rhs.units));
-    }
-
-    return /** @type {any} */ (new Material(x));
+    // 单位仅用于展示，不进行单位转换
+    return /** @type {any} */ (new Material(
+      fn["*"](lhs.value, rhs.value),
+      null  // 单位仅用于展示，不再保留
+    ));
   }
 
   if (typeof lhs === "boolean" || typeof rhs === "boolean") {
@@ -2022,30 +1917,11 @@ export function div(lhs, rhs) {
   } else if (rhs instanceof Vector) {
     return rhs.cloneCombine(lhs, div, true);
   } else if (lhs instanceof Material && rhs instanceof Material) {
-    let x = fn["/"](lhs.value, rhs.value);
-
-    if (lhs.units && rhs.units) {
-      let [scale, newUnits, explicit] = lhs.units.multiply(rhs.units, false);
-      if (scale === 1) {
-        return /** @type {any} */ (new Material(
-          x,
-          newUnits,
-          explicit && lhs.explicitUnits && rhs.explicitUnits 
-        ));
-      } else {
-        return /** @type {any} */ (new Material(
-          fn["*"](x, scale),
-          newUnits,
-          explicit && lhs.explicitUnits && rhs.explicitUnits 
-        ));
-      }
-    } else if (lhs.units) {
-      return /** @type {any} */ (new Material(x, lhs.units));
-    } else if (rhs.units) {
-      return /** @type {any} */ (new Material(x, rhs.units.power(-1)));
-    }
-
-    return /** @type {any} */ (new Material(x));
+    // 单位仅用于展示，不进行单位转换
+    return /** @type {any} */ (new Material(
+      fn["/"](lhs.value, rhs.value),
+      null  // 单位仅用于展示，不再保留
+    ));
   }
 
   if (typeof lhs === "boolean" || typeof rhs === "boolean") {
@@ -2084,13 +1960,7 @@ funcEvalMap["POWER"] = function (node, scope, simulate) {
 
   for (let j = node.children.length - 1; j > 0; j--) {
     let lhs = toNum(evaluateNode(node.children[j - 1], scope, simulate));
-    if (rhs instanceof Vector || !rhs.units) {
-      rhs = power(lhs, rhs);
-    } else {
-      throw new ModelError("Exponents may not have units.", {
-        code: 7027
-      });
-    }
+    rhs = power(lhs, rhs);
   }
 
   return rhs;
@@ -2119,7 +1989,8 @@ export function power(lhs, rhs) {
         code: 7028
       });
     }
-    return /** @type {any} */ (new Material(fn.expt(x, y), lhs.units ? lhs.units.power(y) : undefined));
+    // 单位仅用于展示，不进行单位转换
+    return /** @type {any} */ (new Material(fn.expt(x, y), null));
   }
 
   if (typeof lhs === "boolean" || typeof rhs === "boolean") {
@@ -2168,13 +2039,8 @@ export function doMod(lhs, rhs) {
   } else if (rhs instanceof Vector) {
     return rhs.cloneCombine(lhs, doMod, true);
   } else if (lhs instanceof Material && rhs instanceof Material) {
-    if (!rhs.units) {
-      return /** @type {any} */ (new Material(fn.mod(lhs.value, rhs.value), lhs.units));
-    } else {
-      throw new ModelError("The right hand side of \"mod\" may not have units.", {
-        code: 7033
-      });
-    }
+    // 单位仅用于展示，不进行单位转换
+    return /** @type {any} */ (new Material(fn.mod(lhs.value, rhs.value), null));
   }
 
   if (typeof lhs === "boolean" || typeof rhs === "boolean") {
@@ -2516,17 +2382,10 @@ funcEvalMap["RANGE"] = function (node, scope, simulate) {
   }
 
   vals.push(start.fullClone());
-  if (start.units !== end.units) {
-    let scale = convertUnits(start.units, end.units);
-    if (scale !== 1) {
-      throw new ModelError("Units on both sides of ':' must be equal.", {
-        code: 7044
-      });
-    }
-  }
+  // 单位仅用于展示，不进行单位检查
 
   /** @type {Material} */
-  let step = node.children.length === 2 ? new Material(1, start.units) : toNum(evaluateNode(node.children[1], scope, simulate));
+  let step = node.children.length === 2 ? new Material(1) : toNum(evaluateNode(node.children[1], scope, simulate));
 
   if (!(step instanceof Material)) {
     throw new ModelError("Range elements must be numbers.", {

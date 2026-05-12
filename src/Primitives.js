@@ -1,15 +1,38 @@
-import { simpleNum, simpleEquation, decodeDNA, linkPrimitive, simpleUnitsTest, setAgentInitialValues, getPrimitiveNeighborhood, validateAgentLocation } from "./Modeler.js";
-import { div, plus, mult, evaluateTree, trimTree, trueValue, lessThanEq, greaterThan, minus, eq, createTree, negate, toNum, lessThan, PARENT_SYMBOL } from "./formula/Formula.js";
-import { Material } from "./formula/Material.js";
-import { convertUnits } from "./formula/Units.js";
-import { Task } from "./TaskScheduler.js";
-import { Rand, RandExp } from "./formula/Rand.js";
-import { Vector } from "./formula/Vector.js";
-import { ModelError } from "./formula/ModelError.js";
-import { toHTML } from "./Utilities.js";
-import { stringify } from "./formula/Utilities.js";
 import Big from "../vendor/bigjs/big.js";
-import { fn } from "./CalcMap.js";
+import {
+  decodeDNA,
+  getPrimitiveNeighborhood,
+  linkPrimitive,
+  setAgentInitialValues,
+  simpleEquation,
+  simpleNum,
+  simpleUnitsTest,
+  validateAgentLocation,
+} from "./Modeler.js";
+import { Task } from "./TaskScheduler.js";
+import { toHTML } from "./Utilities.js";
+import {
+  createTree,
+  div,
+  eq,
+  evaluateTree,
+  greaterThan,
+  lessThan,
+  lessThanEq,
+  minus,
+  mult,
+  negate,
+  PARENT_SYMBOL,
+  plus,
+  toNum,
+  trimTree,
+  trueValue,
+} from "./formula/Formula.js";
+import { Material } from "./formula/Material.js";
+import { ModelError } from "./formula/ModelError.js";
+import { Rand, RandExp } from "./formula/Rand.js";
+import { stringify } from "./formula/Utilities.js";
+import { Vector } from "./formula/Vector.js";
 
 /** @typedef {import("./SharedTypes.js").ValueType} ValueType */
 /** @typedef {import("./SharedTypes.js").PlacementType} PlacementType */
@@ -63,14 +86,14 @@ export class SPrimitive {
     /** @type {SPrimitive} */
     this.neighborProxyPrimitive = null;
 
-    this.parent = simulate.coreBank.get("primitivebase");
+    this.parent = simulate.coreBank.get(
+      "primitivebase",
+    );
   }
-  
 
   orig() {
     return this.neighborProxyPrimitive || this;
   }
-
 
   /**
    * @param {import("./formula/Units").UnitStore} u
@@ -82,11 +105,11 @@ export class SPrimitive {
     return 1;
   }
 
-
-
   clone() {
     /** @type {SPrimitive} */
-    let p = new this.constructorFunction(this.simulate);
+    let p = new this.constructorFunction(
+      this.simulate,
+    );
 
     p.dna = this.dna;
     p.container = this.container;
@@ -96,28 +119,30 @@ export class SPrimitive {
     p.createIds();
     p.pastValues = this.pastValues.slice();
 
-
-    p.neighborProxyPrimitive = this.neighborProxyPrimitive;
+    p.neighborProxyPrimitive =
+      this.neighborProxyPrimitive;
 
     if (this.dna.slider) {
       if (this.simulate.sliders[this.dna.id]) {
-        this.simulate.sliders[this.dna.id].push(p);
+        this.simulate.sliders[this.dna.id].push(
+          p,
+        );
       } else {
         this.simulate.sliders[this.dna.id] = [p];
       }
-
     }
 
-    p.cachedValue = this.cachedValue ? this.cachedValue.fullClone() : this.cachedValue;
+    p.cachedValue = this.cachedValue
+      ? this.cachedValue.fullClone()
+      : this.cachedValue;
 
     this.innerClone(p);
 
     return p;
   }
 
-
   // eslint-disable-next-line
-  innerClone(_p) { }
+  innerClone(_p) {}
 
   clearCached() {
     this.cachedValue = undefined;
@@ -131,14 +156,17 @@ export class SPrimitive {
   }
 
   toNum() {
-    let oldPosition = this.simulate.evaluatingPosition;
+    let oldPosition =
+      this.simulate.evaluatingPosition;
     let val = this.value();
     if (typeof val === "string") {
-      this.simulate.evaluatingPosition = oldPosition;
+      this.simulate.evaluatingPosition =
+        oldPosition;
       // if it is a string, properly stringify it
       return stringify(val, this.simulate);
     }
-    this.simulate.evaluatingPosition = oldPosition;
+    this.simulate.evaluatingPosition =
+      oldPosition;
     return val;
   }
 
@@ -146,13 +174,18 @@ export class SPrimitive {
    * @return {ValueType}
    */
   calculateValue() {
-    throw new ModelError(`<i>[${toHTML(this.dna.name)}]</i> does not have a value and can not be used as a value in an equation.`, {
-      code: 1080
-    });
+    throw new ModelError(
+      `<i>[${toHTML(this.dna.name)}]</i> does not have a value and can not be used as a value in an equation.`,
+      {
+        code: 1080,
+      },
+    );
   }
 
   createIds() {
-    this.instanceId = this.simulate.getID(this.agentId + "-" + this.index);
+    this.instanceId = this.simulate.getID(
+      this.agentId + "-" + this.index,
+    );
   }
 
   /**
@@ -164,19 +197,35 @@ export class SPrimitive {
     let items = this.pastValues.slice();
 
     /* Add current value to array if needed */
-    let bins = Math.ceil(div(this.simulate.time(), this.dna.solver.userTimeStep).value) + 1;
+    let bins =
+      Math.ceil(
+        div(
+          this.simulate.time(),
+          this.dna.solver.userTimeStep,
+        ).value,
+      ) + 1;
     if (items.length < bins) {
       items.push(this.value());
     }
 
     let res;
     if (length === undefined) {
-      res = items.map(x => x.fullClone());
+      res = items.map((x) => x.fullClone());
     } else {
-      let bins = Math.ceil(length.value / this.dna.solver.userTimeStep.value);
+      let bins = Math.ceil(
+        length.value /
+          this.dna.solver.userTimeStep.value,
+      );
 
       res = [];
-      for (let i = Math.max(0, items.length - 1 - bins); i < items.length; i++) {
+      for (
+        let i = Math.max(
+          0,
+          items.length - 1 - bins,
+        );
+        i < items.length;
+        i++
+      ) {
         res.push(items[i].fullClone());
       }
     }
@@ -194,18 +243,31 @@ export class SPrimitive {
     let periods;
 
     // check whether we have evaluated the current time period and stored it
-    if (this.pastValues.length - 1 < Math.round((this.simulate.time().value - this.simulate.timeStart.value) / this.dna.solver.userTimeStep.value)) {
-      periods = delay.value / this.dna.solver.userTimeStep.value;
+    if (
+      this.pastValues.length - 1 <
+      Math.round(
+        (this.simulate.time().value -
+          this.simulate.timeStart.value) /
+          this.dna.solver.userTimeStep.value,
+      )
+    ) {
+      periods =
+        delay.value /
+        this.dna.solver.userTimeStep.value;
     } else {
-      periods = delay.value / this.dna.solver.userTimeStep.value + 1;
+      periods =
+        delay.value /
+          this.dna.solver.userTimeStep.value +
+        1;
     }
-
 
     if (periods === 0) {
       return this.value();
     }
 
-    if (Math.ceil(periods) > this.pastValues.length) {
+    if (
+      Math.ceil(periods) > this.pastValues.length
+    ) {
       // prior to when we have data, use the default
       if (defaultValue === null) {
         if (this.pastValues.length > 0) {
@@ -218,12 +280,12 @@ export class SPrimitive {
       }
     }
 
-
     if (periods === Math.round(periods)) {
       // we have an exact value get it
-      return this.pastValues[this.pastValues.length - periods].fullClone();
+      return this.pastValues[
+        this.pastValues.length - periods
+      ].fullClone();
     }
-
 
     // it's between two past values, average them proportionally
     let fraction = periods - Math.floor(periods);
@@ -232,12 +294,23 @@ export class SPrimitive {
     if (entry === 0) {
       firstPeriod = this.value();
     } else {
-      firstPeriod = this.pastValues[this.pastValues.length - entry];
+      firstPeriod =
+        this.pastValues[
+          this.pastValues.length - entry
+        ];
     }
-    secondPeriod = this.pastValues[this.pastValues.length - 1 - entry];
-    return plus(mult(firstPeriod, new Material(1 - fraction)), mult(secondPeriod, new Material(fraction)));
+    secondPeriod =
+      this.pastValues[
+        this.pastValues.length - 1 - entry
+      ];
+    return plus(
+      mult(
+        firstPeriod,
+        new Material(1 - fraction),
+      ),
+      mult(secondPeriod, new Material(fraction)),
+    );
   }
-
 
   /**
    * @param {ValueType} m
@@ -249,17 +322,27 @@ export class SPrimitive {
   }
 
   setValue(_v) {
-    throw new ModelError("You cannot set the value for that primitive.", {
-      code: 1084
-    });
+    throw new ModelError(
+      "You cannot set the value for that primitive.",
+      {
+        code: 1084,
+      },
+    );
   }
 
   /**
    * @returns {ValueType}
    */
   value() {
-    if (this.cachedValue === undefined && this.frozen && this.pastValues.length > 0) {
-      let v = this.pastValues[this.pastValues.length - 1];
+    if (
+      this.cachedValue === undefined &&
+      this.frozen &&
+      this.pastValues.length > 0
+    ) {
+      let v =
+        this.pastValues[
+          this.pastValues.length - 1
+        ];
       if (v.fullClone) {
         this.cachedValue = v.fullClone();
       } else {
@@ -268,32 +351,55 @@ export class SPrimitive {
     }
 
     if (this.cachedValue === undefined) {
-      if (this.simulate.evaluatedPrimitives.has(this)) {
-        let arrayed = [...this.simulate.evaluatedPrimitives.values()];
-        throw new ModelError(`Circular equation loop identified including the primitives: ${toHTML(arrayed.slice(arrayed.indexOf(this)).map(x => x.dna.name).join(", "))}`, {
-          primitive: this.orig(),
-          showEditor: true,
-          code: 1085
-        });
+      if (
+        this.simulate.evaluatedPrimitives.has(
+          this,
+        )
+      ) {
+        let arrayed = [
+          ...this.simulate.evaluatedPrimitives.values(),
+        ];
+        throw new ModelError(
+          `Circular equation loop identified including the primitives: ${toHTML(
+            arrayed
+              .slice(arrayed.indexOf(this))
+              .map((x) => x.dna.name)
+              .join(", "),
+          )}`,
+          {
+            primitive: this.orig(),
+            showEditor: true,
+            code: 1085,
+          },
+        );
       }
       this.simulate.evaluatedPrimitives.add(this);
 
       let x;
       try {
         x = toNum(this.calculateValue());
-        if (x instanceof Material && !isFinite(x.value)) {
+        if (
+          x instanceof Material &&
+          !isFinite(x.value)
+        ) {
           if (this instanceof SStock) {
-            throw new ModelError("The stock has become infinite in size. Check the flows into it for rapid growth.", {
-              primitive: this.orig(),
-              showEditor: true,
-              code: 1086
-            });
+            throw new ModelError(
+              "The stock has become infinite in size. Check the flows into it for rapid growth.",
+              {
+                primitive: this.orig(),
+                showEditor: true,
+                code: 1086,
+              },
+            );
           } else {
-            throw new ModelError("The result of this calculation is not finite (are you dividing by 0?).", {
-              primitive: this.orig(),
-              showEditor: true,
-              code: 1087
-            });
+            throw new ModelError(
+              "The result of this calculation is not finite (are you dividing by 0?).",
+              {
+                primitive: this.orig(),
+                showEditor: true,
+                code: 1087,
+              },
+            );
           }
         }
       } catch (err) {
@@ -304,7 +410,7 @@ export class SPrimitive {
           throw new ModelError(err.message, {
             primitive: this.orig(),
             showEditor: true,
-            code: 1088
+            code: 1088,
           });
         } else {
           throw err;
@@ -318,7 +424,6 @@ export class SPrimitive {
       this.cachedValue = x;
     }
 
-
     if (this.cachedValue.fullClone) {
       return this.cachedValue.fullClone();
     } else {
@@ -328,11 +433,27 @@ export class SPrimitive {
 
   testConstraints(x) {
     let test = (x) => {
-      if (this.dna.useMaxConstraint && x.value > this.dna.maxConstraint) {
-        constraintAlert(this, "max", x, this.simulate);
+      if (
+        this.dna.useMaxConstraint &&
+        x.value > this.dna.maxConstraint
+      ) {
+        constraintAlert(
+          this,
+          "max",
+          x,
+          this.simulate,
+        );
       }
-      if (this.dna.useMinConstraint && x.value < this.dna.minConstraint) {
-        constraintAlert(this, "min", x, this.simulate);
+      if (
+        this.dna.useMinConstraint &&
+        x.value < this.dna.minConstraint
+      ) {
+        constraintAlert(
+          this,
+          "min",
+          x,
+          this.simulate,
+        );
       }
       return x;
     };
@@ -344,13 +465,16 @@ export class SPrimitive {
   }
 
   /**
-   * @param {any} tree 
-   * @param {Map} neighborhood 
+   * @param {any} tree
+   * @param {Map} neighborhood
    */
   setEquation(tree, neighborhood) {
-
     try {
-      this.equation = trimTree(tree, neighborhood, this.simulate);
+      this.equation = trimTree(
+        tree,
+        neighborhood,
+        this.simulate,
+      );
     } catch (err) {
       if (err instanceof ModelError) {
         if (err.primitive && err.showEditor) {
@@ -359,7 +483,7 @@ export class SPrimitive {
         throw new ModelError(err.message, {
           primitive: this.orig(),
           showEditor: true,
-          code: 1089
+          code: 1089,
         });
       } else {
         throw err;
@@ -367,7 +491,6 @@ export class SPrimitive {
     }
   }
 }
-
 
 export class Placeholder extends SPrimitive {
   /**
@@ -388,14 +511,16 @@ export class Placeholder extends SPrimitive {
 
   // @ts-ignore
   calculateValue() {
-    throw new ModelError(`<i>[${toHTML(this.dna.name)}]</i> is a placeholder and cannot be used as a direct value in equations.`, {
-      primitive: this.primitive.dna.primitive,
-      showEditor: true,
-      code: 1091
-    });
+    throw new ModelError(
+      `<i>[${toHTML(this.dna.name)}]</i> is a placeholder and cannot be used as a direct value in equations.`,
+      {
+        primitive: this.primitive.dna.primitive,
+        showEditor: true,
+        code: 1091,
+      },
+    );
   }
 }
-
 
 export class SState extends SPrimitive {
   constructor(simulate) {
@@ -408,7 +533,6 @@ export class SState extends SPrimitive {
 
     this.constructorFunction = SState;
   }
-
 
   innerClone(p) {
     p.setValue(this.active);
@@ -438,7 +562,6 @@ export class SState extends SPrimitive {
     } else {
       return new Material(0);
     }
-
   }
 
   /**
@@ -448,7 +571,13 @@ export class SState extends SPrimitive {
     let init;
 
     try {
-      init = toNum(evaluateTree(this.equation, localVars(this, this.simulate), this.simulate));
+      init = toNum(
+        evaluateTree(
+          this.equation,
+          localVars(this, this.simulate),
+          this.simulate,
+        ),
+      );
     } catch (err) {
       if (err instanceof ModelError) {
         if (err.primitive && err.showEditor) {
@@ -457,7 +586,7 @@ export class SState extends SPrimitive {
         throw new ModelError(err.message, {
           primitive: this.orig(),
           showEditor: true,
-          code: 1092
+          code: 1092,
         });
       } else {
         throw err;
@@ -468,7 +597,6 @@ export class SState extends SPrimitive {
     if (this.agentId) {
       this.container.updateStates();
     }
-
   }
 
   setActive(active, suppress) {
@@ -477,41 +605,67 @@ export class SState extends SPrimitive {
     if (!active || this.dna.residency === null) {
       if (!suppress) {
         if (active) {
-          if (!this.simulate.transitionPrimitives) {
-            this.simulate.transitionPrimitives = [];
+          if (
+            !this.simulate.transitionPrimitives
+          ) {
+            this.simulate.transitionPrimitives =
+              [];
           }
 
-          if (this.simulate.transitionPrimitives.length > 1200 && this.simulate.transitionPrimitives.includes(this)) {
-            throw new ModelError(`Circular fully active transition loop identified including the states: ${toHTML(this.simulate.transitionPrimitives.slice(0, 5).map(x => "[" + x.dna.name + "]").join(", "))}`, {
-              code: 1105
-            });
+          if (
+            this.simulate.transitionPrimitives
+              .length > 1200 &&
+            this.simulate.transitionPrimitives.includes(
+              this,
+            )
+          ) {
+            throw new ModelError(
+              `Circular fully active transition loop identified including the states: ${toHTML(
+                this.simulate.transitionPrimitives
+                  .slice(0, 5)
+                  .map(
+                    (x) => "[" + x.dna.name + "]",
+                  )
+                  .join(", "),
+              )}`,
+              {
+                code: 1105,
+              },
+            );
           }
-          this.simulate.transitionPrimitives.push(this);
+          this.simulate.transitionPrimitives.push(
+            this,
+          );
         }
 
-        for (let transition of this.downStreamTransitions) {
+        for (let transition of this
+          .downStreamTransitions) {
           scheduleTrigger.call(transition);
         }
 
         if (active) {
           this.simulate.transitionPrimitives = [];
         }
-
       }
     } else {
-      this.simulate.tasks.add(new Task({
-        name: "State Residency",
-        time: plus(this.simulate.time(), this.dna.residency),
-        priority: 5,
-        expires: 1,
-        action: (_task) => {
-          for (let transition of this.downStreamTransitions) {
-            scheduleTrigger.call(transition);
-          }
-        }
-      }));
+      this.simulate.tasks.add(
+        new Task({
+          name: "State Residency",
+          time: plus(
+            this.simulate.time(),
+            this.dna.residency,
+          ),
+          priority: 5,
+          expires: 1,
+          action: (_task) => {
+            for (let transition of this
+              .downStreamTransitions) {
+              scheduleTrigger.call(transition);
+            }
+          },
+        }),
+      );
     }
-
   }
 
   /**
@@ -524,7 +678,6 @@ export class SState extends SPrimitive {
     return this.active;
   }
 }
-
 
 export class STransition extends SPrimitive {
   constructor(simulate) {
@@ -543,7 +696,7 @@ export class STransition extends SPrimitive {
     this.constructorFunction = STransition;
   }
 
-  innerClone() { }
+  innerClone() {}
 
   /**
    * @param {SState} alpha
@@ -561,7 +714,12 @@ export class STransition extends SPrimitive {
    * @returns {boolean}
    */
   canTrigger() {
-    return !this.alpha || (this.alpha && this.alpha.getActive()) || (this.dna.repeat && this.dna.trigger !== "Condition");
+    return (
+      !this.alpha ||
+      (this.alpha && this.alpha.getActive()) ||
+      (this.dna.repeat &&
+        this.dna.trigger !== "Condition")
+    );
   }
 
   trigger() {
@@ -580,12 +738,14 @@ export class STransition extends SPrimitive {
     if (this.agentId) {
       this.container.updateStates();
     }
-    if (this.dna.repeat && this.dna.trigger !== "Condition") {
+    if (
+      this.dna.repeat &&
+      this.dna.trigger !== "Condition"
+    ) {
       scheduleTrigger.call(this);
     }
   }
 }
-
 
 /**
  * @this {STransition|SAction}
@@ -594,19 +754,20 @@ function scheduleTrigger() {
   updateTrigger.call(this, true);
 }
 
-
 /**
  * @this {STransition|SAction}
  *
  * @param {boolean} force
  */
 function clearTrigger(force) {
-  if (this.scheduledTrigger && (force || !this.dna.repeat)) {
+  if (
+    this.scheduledTrigger &&
+    (force || !this.dna.repeat)
+  ) {
     this.scheduledTrigger.kill();
     this.scheduledTrigger = null;
   }
 }
-
 
 /**
  * @this {STransition|SAction}
@@ -620,11 +781,16 @@ export function updateTrigger(clear) {
     clearTrigger.call(this);
   }
 
-
   if (this.canTrigger()) {
     let v;
     try {
-      v = toNum(evaluateTree(this.equation, localVars(this, this.simulate), this.simulate));
+      v = toNum(
+        evaluateTree(
+          this.equation,
+          localVars(this, this.simulate),
+          this.simulate,
+        ),
+      );
     } catch (err) {
       if (err instanceof ModelError) {
         if (err.primitive && err.showEditor) {
@@ -633,7 +799,7 @@ export function updateTrigger(clear) {
         throw new ModelError(err.message, {
           primitive: this.orig(),
           showEditor: false,
-          code: 1090
+          code: 1090,
         });
       } else {
         throw err;
@@ -647,115 +813,132 @@ export function updateTrigger(clear) {
         }
       } else {
         if (!(v instanceof Material)) {
-          throw new ModelError(`The value of this trigger must evaluate to a number. Got <i>${toHTML("" + v)}</i>.`, {
-            primitive: this.orig(),
-            showEditor: true,
-            code: 1112
-          });
+          throw new ModelError(
+            `The value of this trigger must evaluate to a number. Got <i>${toHTML("" + v)}</i>.`,
+            {
+              primitive: this.orig(),
+              showEditor: true,
+              code: 1112,
+            },
+          );
         }
 
         /** @type {Material} */
         let t;
 
         if (this.dna.trigger === "Timeout") {
-
           if (!v.units) {
             verifyValuedType(v, this);
 
             v.units = this.simulate.timeUnits;
-          } else {
-            v.units.addBase();
-            let base = /** @type {import("./formula/Units").UnitStore} */ (v.units.baseUnits);
-            if (base.names.length !== 1 || base.names[0] !== "seconds" || base.exponents[0] !== 1) {
-              throw new ModelError(`A trigger Timeout must have units of time, got <i>${v.units.toString()}</i>.`, {
-                primitive: this.orig(),
-                showEditor: true,
-                code: 1113
-              });
-            }
           }
 
-          if (this.scheduledTrigger && eq(v, this.scheduledTrigger.data.value)) {
+          if (
+            this.scheduledTrigger &&
+            eq(
+              v,
+              this.scheduledTrigger.data.value,
+            )
+          ) {
             return;
           }
 
           if (v.value === 0) {
             if (this.dna.repeat) {
-              throw new ModelError("A trigger Timeout of 0 with 'Repeat' set to true results in an infinite loop.", {
-                primitive: this.orig(),
-                showEditor: true,
-                code: 1114
-              });
+              throw new ModelError(
+                "A trigger Timeout of 0 with 'Repeat' set to true results in an infinite loop.",
+                {
+                  primitive: this.orig(),
+                  showEditor: true,
+                  code: 1114,
+                },
+              );
             } else {
               this.trigger();
               return;
             }
           }
 
-
           if (v.value < 0) {
-            throw new ModelError("The timeout for a transition cannot be less than 0.", {
-              primitive: this.orig(),
-              showEditor: true,
-              code: 1115
-            });
+            throw new ModelError(
+              "The timeout for a transition cannot be less than 0.",
+              {
+                primitive: this.orig(),
+                showEditor: true,
+                code: 1115,
+              },
+            );
           }
 
           if (isNaN(v.value)) {
-            throw new ModelError("The timeout for the transition is not a valid number.", {
-              primitive: this.orig(),
-              showEditor: true,
-              code: 1116
-            });
+            throw new ModelError(
+              "The timeout for the transition is not a valid number.",
+              {
+                primitive: this.orig(),
+                showEditor: true,
+                code: 1116,
+              },
+            );
           }
 
           t = v;
-
-        } else if (this.dna.trigger === "Probability") {
-          if (v.units && !v.units.isUnitless()) {
-            throw new ModelError(`The probability for the trigger had units of <i>${v.units.toString()}</i>. Probabilities must be unitless.`, {
-              primitive: this.orig(),
-              showEditor: true,
-              code: 1121
-            });
-          }
-
+        } else if (
+          this.dna.trigger === "Probability"
+        ) {
           if (isNaN(v.value)) {
-            throw new ModelError("The probability for the transition is not a valid number.", {
-              primitive: this.orig(),
-              showEditor: true,
-              code: 1117
-            });
+            throw new ModelError(
+              "The probability for the transition is not a valid number.",
+              {
+                primitive: this.orig(),
+                showEditor: true,
+                code: 1117,
+              },
+            );
           }
 
           v = v.value;
-          if (this.scheduledTrigger && eq(v, this.scheduledTrigger.data.value)) {
+          if (
+            this.scheduledTrigger &&
+            eq(
+              v,
+              this.scheduledTrigger.data.value,
+            )
+          ) {
             return;
           }
 
           if (v === 1) {
             if (this.dna.repeat) {
-              throw new ModelError("A trigger probability of 1 with 'Repeat' as true results in an infinite loop.", {
-                primitive: this.orig(),
-                showEditor: true,
-                code: 1118
-              });
+              throw new ModelError(
+                "A trigger probability of 1 with 'Repeat' as true results in an infinite loop.",
+                {
+                  primitive: this.orig(),
+                  showEditor: true,
+                  code: 1118,
+                },
+              );
             } else {
               this.trigger();
               return;
             }
           } else if (v > 1) {
-            throw new ModelError("The probability for the trigger must be less than or equal to 1.", {
-              primitive: this.orig(),
-              showEditor: true,
-              code: 1119
-            });
+            throw new ModelError(
+              "The probability for the trigger must be less than or equal to 1.",
+              {
+                primitive: this.orig(),
+                showEditor: true,
+                code: 1119,
+              },
+            );
           } else if (v < 0) {
-            throw new ModelError("The probability for the trigger must be greater than or equal to 0.", {
-              primitive: this.orig(),
-              showEditor: true,
-              code: 1120
-            });
+            throw new ModelError(
+              "The probability for the trigger must be greater than or equal to 0.",
+              {
+                primitive: this.orig(),
+                showEditor: true,
+                code: 1120,
+              },
+            );
           } else if (v === 0) {
             if (!this.scheduledTrigger) {
               return;
@@ -764,9 +947,11 @@ export function updateTrigger(clear) {
             // v is the probability of at least one event happening in the time period
             // we use the exponential distribution to determine the time until the next event
             let l = -Math.log(1 - v);
-            t = new Material(RandExp(this.simulate, l), this.simulate.timeUnits);
+            t = new Material(
+              RandExp(this.simulate, l),
+              this.simulate.timeUnits,
+            );
           }
-
         }
 
         let start = this.simulate.time();
@@ -774,23 +959,45 @@ export function updateTrigger(clear) {
         if (this.scheduledTrigger) {
           this.scheduledTrigger.kill();
           if (this.dna.trigger === "Timeout") {
-            if (lessThanEq(t, minus(this.simulate.time(), this.scheduledTrigger.data.start))) {
+            if (
+              lessThanEq(
+                t,
+                minus(
+                  this.simulate.time(),
+                  this.scheduledTrigger.data
+                    .start,
+                ),
+              )
+            ) {
               this.scheduledTrigger = null;
               this.trigger();
               return;
             } else {
-              start = this.scheduledTrigger.data.start;
-              t = minus(t, minus(this.simulate.time(), start));
+              start =
+                this.scheduledTrigger.data.start;
+              t = minus(
+                t,
+                minus(
+                  this.simulate.time(),
+                  start,
+                ),
+              );
               this.scheduledTrigger = null;
             }
-          } else if (this.dna.trigger === "Probability") {
+          } else if (
+            this.dna.trigger === "Probability"
+          ) {
             if (v === 0) {
               this.scheduledTrigger = null;
               return;
             }
-            t = minus(this.scheduledTrigger.time, this.simulate.time());
+            t = minus(
+              this.scheduledTrigger.time,
+              this.simulate.time(),
+            );
 
-            let v0 = this.scheduledTrigger.data.value;
+            let v0 =
+              this.scheduledTrigger.data.value;
             if (v0 !== v) {
               let l0 = -Math.log(1 - v0);
               // @ts-ignore - v is going to be a number at this point
@@ -799,7 +1006,8 @@ export function updateTrigger(clear) {
               t = mult(t, new Material(l0 / l));
             }
 
-            start = this.scheduledTrigger.data.start;
+            start =
+              this.scheduledTrigger.data.start;
 
             this.scheduledTrigger = null;
           }
@@ -815,11 +1023,12 @@ export function updateTrigger(clear) {
           action: (_task) => {
             this.trigger();
           },
-          data: { start: start, value: v }
+          data: { start: start, value: v },
         });
 
-        this.simulate.tasks.add(this.scheduledTrigger);
-
+        this.simulate.tasks.add(
+          this.scheduledTrigger,
+        );
       }
     } catch (err) {
       if (err instanceof ModelError) {
@@ -829,7 +1038,7 @@ export function updateTrigger(clear) {
         throw new ModelError(err.message, {
           primitive: this.orig(),
           showEditor: true,
-          code: 1094
+          code: 1094,
         });
       } else {
         throw err;
@@ -837,7 +1046,6 @@ export function updateTrigger(clear) {
     }
   }
 }
-
 
 export class SAction extends SPrimitive {
   constructor(simulate) {
@@ -857,7 +1065,7 @@ export class SAction extends SPrimitive {
     this.constructorFunction = SAction;
   }
 
-  innerClone() { }
+  innerClone() {}
 
   /**
    * @returns {boolean}
@@ -878,7 +1086,11 @@ export class SAction extends SPrimitive {
     }
 
     try {
-      evaluateTree(this.action, localVars(this, this.simulate), this.simulate);
+      evaluateTree(
+        this.action,
+        localVars(this, this.simulate),
+        this.simulate,
+      );
 
       if (this.dna.repeat) {
         if (this.dna.trigger !== "Condition") {
@@ -895,7 +1107,7 @@ export class SAction extends SPrimitive {
         throw new ModelError(err.message, {
           primitive: this.orig(),
           showEditor: true,
-          code: 1096
+          code: 1096,
         });
       } else {
         throw err;
@@ -943,7 +1155,12 @@ export class SPopulation extends SPrimitive {
 
     this.constructorFunction = SPopulation;
 
-    this.vector = new Vector([], simulate, [], simulate.coreBank.get("primitivebase"));
+    this.vector = new Vector(
+      [],
+      simulate,
+      [],
+      simulate.coreBank.get("primitivebase"),
+    );
   }
 
   collectData() {
@@ -951,9 +1168,18 @@ export class SPopulation extends SPrimitive {
     for (let agent of this.agents) {
       x.push({
         instanceId: agent.instanceId,
-        connected: agent.connected.map(x => x.instanceId),
-        location: simpleNum(agent.location.clone(), this.geoDimUnitsObject, this.simulate),
-        state: agent.states.length > 0 ? agent.states.slice() : null
+        connected: agent.connected.map(
+          (x) => x.instanceId,
+        ),
+        location: simpleNum(
+          agent.location.clone(),
+          this.geoDimUnitsObject,
+          this.simulate,
+        ),
+        state:
+          agent.states.length > 0
+            ? agent.states.slice()
+            : null,
       });
     }
     return x;
@@ -970,9 +1196,12 @@ export class SPopulation extends SPrimitive {
    * @returns {Material}
    */
   toNum() {
-    throw new ModelError(`<i>[${toHTML(this.dna.name)}]</i> is a population of agents and cannot be used as a direct value in equations.`, {
-      code: 1107
-    });
+    throw new ModelError(
+      `<i>[${toHTML(this.dna.name)}]</i> is a population of agents and cannot be used as a direct value in equations.`,
+      {
+        code: 1107,
+      },
+    );
   }
 
   /**
@@ -1000,7 +1229,6 @@ export class SPopulation extends SPrimitive {
       }
 
       agent.updateStates();
-
     } else {
       agent = new SAgent(this.simulate);
       agent.container = this;
@@ -1009,48 +1237,116 @@ export class SPopulation extends SPrimitive {
       agent.agentId = this.agentId;
 
       for (let dna of this.DNAs) {
-        decodeDNA(dna, agent, this.simulate, true);
+        decodeDNA(
+          dna,
+          agent,
+          this.simulate,
+          true,
+        );
       }
 
       agent.setIndex(this.size - 1);
       agent.createAgentIds();
 
       for (let i = 0; i < this.DNAs.length; i++) {
-        linkPrimitive(agent.children[i], this.DNAs[i], this.simulate);
+        linkPrimitive(
+          agent.children[i],
+          this.DNAs[i],
+          this.simulate,
+        );
       }
 
       setAgentInitialValues(agent);
 
-      let neighbors = getPrimitiveNeighborhood(this, this.dna, this.simulate, []);
+      let neighbors = getPrimitiveNeighborhood(
+        this,
+        this.dna,
+        this.simulate,
+        [],
+      );
 
       if (this.placement === "Custom Function") {
         // @ts-ignore - Agent is equivalent to Primitive for this use case
         neighbors.set("self", agent);
         // @ts-ignore
-        agent.location = simpleUnitsTest(/** @type {Vector} */(simpleEquation(this.placementFunction, this.simulate, new Map([
-          [PARENT_SYMBOL, this.simulate.varBank],
-          ["self", agent]
-        ]), neighbors)), this.geoDimUnitsObject, this.simulate, null, null, "Agent placement functions must return a two element vector");
+        agent.location = simpleUnitsTest(
+          /** @type {Vector} */ (
+            simpleEquation(
+              this.placementFunction,
+              this.simulate,
+              new Map([
+                [
+                  PARENT_SYMBOL,
+                  this.simulate.varBank,
+                ],
+                ["self", agent],
+              ]),
+              neighbors,
+            )
+          ),
+          this.geoDimUnitsObject,
+          this.simulate,
+          null,
+          null,
+          "Agent placement functions must return a two element vector",
+        );
 
-        validateAgentLocation(agent.location, this);
+        validateAgentLocation(
+          agent.location,
+          this,
+        );
 
         if (!agent.location.names) {
           agent.location.names = ["x", "y"];
           agent.location.namesLC = ["x", "y"];
         }
       } else {
-        agent.location = new Vector([mult(this.geoWidth, new Material(Rand(this.simulate))), mult(this.geoHeight, new Material(Rand(this.simulate)))], this.simulate, ["x", "y"]);
+        agent.location = new Vector(
+          [
+            mult(
+              this.geoWidth,
+              new Material(Rand(this.simulate)),
+            ),
+            mult(
+              this.geoHeight,
+              new Material(Rand(this.simulate)),
+            ),
+          ],
+          this.simulate,
+          ["x", "y"],
+        );
       }
       if (this.network === "Custom Function") {
-        let tree = trimTree(createTree(this.networkFunction, "p:" + this.id + ":networkFunction", this.simulate), neighbors, this.simulate);
+        let tree = trimTree(
+          createTree(
+            this.networkFunction,
+            "p:" + this.id + ":networkFunction",
+            this.simulate,
+          ),
+          neighbors,
+          this.simulate,
+        );
         for (let a of this.agents) {
           if (agent !== a) {
             // @ts-ignore
-            if (trueValue(simpleEquation(this.networkFunction, this.simulate, new Map([
-              [PARENT_SYMBOL, this.simulate.varBank],
-              ["a", agent],
-              ["b", a]
-            ]), neighbors, tree))) {
+            if (
+              trueValue(
+                simpleEquation(
+                  this.networkFunction,
+                  this.simulate,
+                  new Map([
+                    [
+                      PARENT_SYMBOL,
+                      this.simulate.varBank,
+                    ],
+                    ["a", agent],
+                    ["b", a],
+                  ]),
+                  neighbors,
+                  tree,
+                ),
+              )
+            ) {
               agent.connect(a);
             }
           }
@@ -1058,53 +1354,61 @@ export class SPopulation extends SPrimitive {
       }
     }
 
-    this.simulate.tasks.add(new Task({
-      priority: 10,
-      expires: 1,
-      name: "Add Agent",
-      time: this.simulate.time(),
-      action: (_task) => {
-        this.agents.push(agent);
+    this.simulate.tasks.add(
+      new Task({
+        priority: 10,
+        expires: 1,
+        name: "Add Agent",
+        time: this.simulate.time(),
+        action: (_task) => {
+          this.agents.push(agent);
 
-        for (let i = 0; i < agent.children.length; i++) {
-          let x = agent.children[i];
+          for (
+            let i = 0;
+            i < agent.children.length;
+            i++
+          ) {
+            let x = agent.children[i];
 
-          let dna = this.DNAs[i];
+            let dna = this.DNAs[i];
 
-          if (x instanceof SAction || x instanceof STransition) {
-            if (dna.trigger !== "Condition") {
-              scheduleTrigger.call(x);
+            if (
+              x instanceof SAction ||
+              x instanceof STransition
+            ) {
+              if (dna.trigger !== "Condition") {
+                scheduleTrigger.call(x);
+              }
             }
-          }
 
-          if (base) {
-            if (x instanceof SAction) {
-              dna.solver.actions.push(x);
-            } else if (x instanceof STransition) {
-              dna.solver.transitions.push(x);
-            } else if (!(x instanceof SPopulation)) {
-              dna.solver.valued.push(x);
-              if (x instanceof SFlow) {
-                dna.solver.flows.push(x);
-              } else if (x instanceof SStock) {
-                dna.solver.stocks.push(x);
-              } else if (x instanceof SState) {
-                dna.solver.states.push(x);
+            if (base) {
+              if (x instanceof SAction) {
+                dna.solver.actions.push(x);
+              } else if (
+                x instanceof STransition
+              ) {
+                dna.solver.transitions.push(x);
+              } else if (
+                !(x instanceof SPopulation)
+              ) {
+                dna.solver.valued.push(x);
+                if (x instanceof SFlow) {
+                  dna.solver.flows.push(x);
+                } else if (x instanceof SStock) {
+                  dna.solver.stocks.push(x);
+                } else if (x instanceof SState) {
+                  dna.solver.states.push(x);
+                }
               }
             }
           }
-
-
-        }
-
-
-      }
-    }));
+        },
+      }),
+    );
 
     return agent;
   }
 }
-
 
 export class SAgent {
   constructor(simulate) {
@@ -1151,12 +1455,19 @@ export class SAgent {
 
     this.simulate = simulate;
 
-    this.vector = new Vector([], simulate, [], simulate.coreBank.get("agentbase"));
+    this.vector = new Vector(
+      [],
+      simulate,
+      [],
+      simulate.coreBank.get("agentbase"),
+    );
   }
 
   createIds() {
     // same as Primitive
-    this.instanceId = this.simulate.getID(this.agentId + "-" + this.index);
+    this.instanceId = this.simulate.getID(
+      this.agentId + "-" + this.index,
+    );
   }
 
   /**
@@ -1200,9 +1511,9 @@ export class SAgent {
 
     agent.location = this.location.clone();
     agent.connected = this.connected.slice();
-    agent.connectedWeights = this.connectedWeights.slice();
+    agent.connectedWeights =
+      this.connectedWeights.slice();
     agent.container = this.container;
-
 
     return agent;
   }
@@ -1229,7 +1540,11 @@ export class SAgent {
       this.unconnect(this.connected[0]);
     }
 
-    for (let i = 0; i < this.container.agents.length; i++) {
+    for (
+      let i = 0;
+      i < this.container.agents.length;
+      i++
+    ) {
       if (this.container.agents[i] === this) {
         this.container.agents.splice(i, 1);
         break;
@@ -1239,23 +1554,42 @@ export class SAgent {
     for (let child of this.children) {
       let solver = child.dna.solver;
       if (child instanceof SAction) {
-        solver.actions.splice(solver.actions.indexOf(child), 1);
+        solver.actions.splice(
+          solver.actions.indexOf(child),
+          1,
+        );
         clearTrigger.call(child, true);
       } else if (child instanceof STransition) {
-        solver.transitions.splice(solver.transitions.indexOf(child), 1);
+        solver.transitions.splice(
+          solver.transitions.indexOf(child),
+          1,
+        );
         clearTrigger.call(child, true);
-      } else if (!(child instanceof SPopulation)) {
-        solver.valued.splice(solver.valued.indexOf(child), 1);
+      } else if (
+        !(child instanceof SPopulation)
+      ) {
+        solver.valued.splice(
+          solver.valued.indexOf(child),
+          1,
+        );
         if (child instanceof SFlow) {
-          solver.flows.splice(solver.flows.indexOf(child), 1);
+          solver.flows.splice(
+            solver.flows.indexOf(child),
+            1,
+          );
         } else if (child instanceof SStock) {
-          solver.stocks.splice(solver.stocks.indexOf(child), 1);
+          solver.stocks.splice(
+            solver.stocks.indexOf(child),
+            1,
+          );
         } else if (child instanceof SState) {
-          solver.states.splice(solver.states.indexOf(child), 1);
+          solver.states.splice(
+            solver.states.indexOf(child),
+            1,
+          );
         }
       }
     }
-
 
     this.dead = true;
   }
@@ -1265,7 +1599,10 @@ export class SAgent {
    * @param {Material=} weight
    */
   connect(x, weight) {
-    let w = weight === undefined ? new Material(1) : weight;
+    let w =
+      weight === undefined
+        ? new Material(1)
+        : weight;
     if (x !== this) {
       if (!this.connected.includes(x)) {
         if (x instanceof SAgent) {
@@ -1274,16 +1611,22 @@ export class SAgent {
           x.connected.push(this);
           x.connectedWeights.push(w);
         } else {
-          throw new ModelError("Only agents may be connected.", {
-            code: 1106
-          });
+          throw new ModelError(
+            "Only agents may be connected.",
+            {
+              code: 1106,
+            },
+          );
         }
       } else if (weight !== undefined) {
-        this.connectedWeights[this.connected.indexOf(x)] = weight;
-        x.connectedWeights[x.connected.indexOf(this)] = weight;
+        this.connectedWeights[
+          this.connected.indexOf(x)
+        ] = weight;
+        x.connectedWeights[
+          x.connected.indexOf(this)
+        ] = weight;
       }
     }
-
   }
 
   /**
@@ -1311,14 +1654,18 @@ export class SAgent {
       let i = this.connected.indexOf(x);
 
       if (i !== -1) {
-        return this.connectedWeights[i].fullClone();
+        return this.connectedWeights[
+          i
+        ].fullClone();
       }
     }
-    throw new ModelError("Agents are not connected and so do not have a connection weight.", {
-      code: 1108
-    });
+    throw new ModelError(
+      "Agents are not connected and so do not have a connection weight.",
+      {
+        code: 1108,
+      },
+    );
   }
-
 
   /**
    * @param {SAgent} x
@@ -1339,27 +1686,34 @@ export class SAgent {
       }
     }
     if (!set) {
-      throw new ModelError("Agents are not connected and so do not have a connection weight.", {
-        code: 1109
-      });
+      throw new ModelError(
+        "Agents are not connected and so do not have a connection weight.",
+        {
+          code: 1109,
+        },
+      );
     }
   }
 }
 
-
 function verifyValuedType(x, primitive) {
-  if (x instanceof Vector || x instanceof Material) {
+  if (
+    x instanceof Vector ||
+    x instanceof Material
+  ) {
     // pass
     return;
   }
 
-  throw new ModelError(`This value may only be numbers or vectors, found a ${typeof x}.`, {
-    primitive: primitive,
-    showEditor: false,
-    code: 1110
-  });
+  throw new ModelError(
+    `This value may only be numbers or vectors, found a ${typeof x}.`,
+    {
+      primitive: primitive,
+      showEditor: false,
+      code: 1110,
+    },
+  );
 }
-
 
 export class SStock extends SPrimitive {
   constructor(simulate) {
@@ -1396,16 +1750,23 @@ export class SStock extends SPrimitive {
     this.value();
   }
 
-
   preserveLevel() {
-    for (let i = this.tasks.length - 1; i >= 0; i--) {
+    for (
+      let i = this.tasks.length - 1;
+      i >= 0;
+      i--
+    ) {
       this.tasks[i].data.tentative = false;
     }
     this.oldLevel = this.level;
   }
 
   restoreLevel() {
-    for (let i = this.tasks.length - 1; i >= 0; i--) {
+    for (
+      let i = this.tasks.length - 1;
+      i >= 0;
+      i--
+    ) {
       if (this.tasks[i].data.tentative) {
         this.tasks[i].remove();
         this.tasks.splice(i, 1);
@@ -1431,7 +1792,13 @@ export class SStock extends SPrimitive {
     let init;
 
     try {
-      init = toNum(evaluateTree(this.equation, localVars(this, this.simulate), this.simulate));
+      init = toNum(
+        evaluateTree(
+          this.equation,
+          localVars(this, this.simulate),
+          this.simulate,
+        ),
+      );
     } catch (err) {
       if (err instanceof ModelError) {
         if (err.primitive && err.showEditor) {
@@ -1440,7 +1807,7 @@ export class SStock extends SPrimitive {
         throw new ModelError(err.message, {
           primitive: this.orig(),
           showEditor: true,
-          code: 1098
+          code: 1098,
         });
       } else {
         throw err;
@@ -1471,7 +1838,10 @@ export class SStock extends SPrimitive {
     } else {
       verifyValuedType(init);
 
-      if (this.dna.nonNegative && init.value < 0) {
+      if (
+        this.dna.nonNegative &&
+        init.value < 0
+      ) {
         init = new Material(0, this.dna.units);
       }
       if (!init.units) {
@@ -1480,35 +1850,67 @@ export class SStock extends SPrimitive {
       }
     }
 
-
     if (
-      this.delay === undefined
-      || this.delay.value <= this.simulate.timeStep.value
+      this.delay === undefined ||
+      this.delay.value <=
+        this.simulate.timeStep.value
     ) {
       // it's a non-serialized stock;
       this.level = init;
     } else {
       // it's serialized
-      this.initRate = div(init, new Material(this.delay.value));
-      let startValue = mult(this.initRate, new Material(this.simulate.userTimeStep.value));
+      this.initRate = div(
+        init,
+        new Material(this.delay.value),
+      );
+      let startValue = mult(
+        this.initRate,
+        new Material(
+          this.simulate.userTimeStep.value,
+        ),
+      );
 
       this.level = startValue;
 
+      this.simulate.tasks.addEvent(
+        (timeChange, oldTime, newTime) => {
+          if (timeChange.value > 0) {
+            let delaySpanEnd = minus(
+              this.delay,
+              this.simulate.userTimeStep,
+            );
+            let eventSpan = [
+              minus(
+                oldTime,
+                this.simulate.timeStart,
+              ),
+              minus(
+                newTime,
+                this.simulate.timeStart,
+              ),
+            ];
+            // No overlaps between the two spans
+            if (
+              lessThan(delaySpanEnd, eventSpan[0])
+            ) {
+              return;
+            }
 
-      this.simulate.tasks.addEvent((timeChange, oldTime, newTime) => {
-        if (timeChange.value > 0) {
-          let delaySpanEnd = minus(this.delay, this.simulate.userTimeStep);
-          let eventSpan = [minus(oldTime, this.simulate.timeStart), minus(newTime, this.simulate.timeStart)];
-          // No overlaps between the two spans
-          if (lessThan(delaySpanEnd, eventSpan[0])) {
-            return;
+            let overlap = minus(
+              this.simulate.coreBank.get("min")([
+                delaySpanEnd,
+                eventSpan[1],
+              ]),
+              eventSpan[0],
+            );
+
+            this.level = plus(
+              this.level,
+              mult(overlap, this.initRate),
+            );
           }
-
-          let overlap = minus(this.simulate.coreBank.get("min")([delaySpanEnd, eventSpan[1]]), eventSpan[0]);
-          
-          this.level = plus(this.level, mult(overlap, this.initRate));
-        }
-      });
+        },
+      );
     }
   }
 
@@ -1528,7 +1930,10 @@ export class SStock extends SPrimitive {
           }
         });
       } else if (this.level.value < 0) {
-        this.level = new Material(0, this.dna.units);
+        this.level = new Material(
+          0,
+          this.dna.units,
+        );
       }
     }
   }
@@ -1538,15 +1943,22 @@ export class SStock extends SPrimitive {
    * @param {Material} oldTime
    */
   add(amnt, oldTime) {
-
     let targetTime;
-    
+
     if (this.delay !== undefined) {
       // @ts-ignore bigjs is misstyped
-      targetTime = new Material(Big(oldTime.value).plus(this.delay.value).toNumber(), oldTime.units);
+      targetTime = new Material(
+        Big(oldTime.value)
+          .plus(this.delay.value)
+          .toNumber(),
+        oldTime.units,
+      );
     }
 
-    if (this.delay === undefined || lessThanEq(targetTime, this.simulate.time())) {
+    if (
+      this.delay === undefined ||
+      lessThanEq(targetTime, this.simulate.time())
+    ) {
       this.level = plus(this.level, amnt);
       if (this.dna.nonNegative) {
         if (this.level instanceof Vector) {
@@ -1559,7 +1971,10 @@ export class SStock extends SPrimitive {
             }
           });
         } else if (this.level.value < 0) {
-          this.level = new Material(0, this.dna.units);
+          this.level = new Material(
+            0,
+            this.dna.units,
+          );
         }
       }
     } else {
@@ -1578,10 +1993,11 @@ export class SStock extends SPrimitive {
       time: targetTime,
       data: {
         amnt: amnt,
-        tentative: true
+        tentative: true,
       },
       priority: -100,
-      name: "Conveyor Add (" + this.dna.name + ")",
+      name:
+        "Conveyor Add (" + this.dna.name + ")",
       action: (_task) => {
         oldLevel = this.level;
         this.level = plus(this.level, amnt);
@@ -1597,13 +2013,16 @@ export class SStock extends SPrimitive {
               }
             });
           } else if (this.level.value < 0) {
-            this.level = new Material(0, this.dna.units);
+            this.level = new Material(
+              0,
+              this.dna.units,
+            );
           }
         }
       },
       rollback: () => {
         this.level = oldLevel;
-      }
+      },
     });
     this.tasks.push(t);
     this.simulate.tasks.add(t);
@@ -1620,19 +2039,37 @@ export class SStock extends SPrimitive {
     if (this.delay !== undefined) {
       let res = this.level;
       let t = this.simulate.time();
-      for (let i = this.tasks.length - 1; i >= 0; i--) {
+      for (
+        let i = this.tasks.length - 1;
+        i >= 0;
+        i--
+      ) {
         if (greaterThan(this.tasks[i].time, t)) {
-          res = plus(res, /** @type {ValueType} */ (this.tasks[i].data.amnt));
+          res = plus(
+            res,
+            /** @type {ValueType} */ (
+              this.tasks[i].data.amnt
+            ),
+          );
         } else {
           break;
         }
       }
 
       // add in any pending `addEvent` mass from initialization
-      let progressed = plus(this.simulate.timeProgressed(), this.simulate.userTimeStep);
+      let progressed = plus(
+        this.simulate.timeProgressed(),
+        this.simulate.userTimeStep,
+      );
       if (greaterThan(this.delay, progressed)) {
-        let timeLeft = minus(this.delay, progressed);
-        res = plus(res, mult(this.initRate, timeLeft));
+        let timeLeft = minus(
+          this.delay,
+          progressed,
+        );
+        res = plus(
+          res,
+          mult(this.initRate, timeLeft),
+        );
       }
 
       return res;
@@ -1645,11 +2082,35 @@ export class SStock extends SPrimitive {
     if (this.level === null) {
       this.setInitialValue();
     }
-    if (this.delay !== undefined && this.dna.solver.RKOrder === 4) {
+    if (
+      this.delay !== undefined &&
+      this.dna.solver.RKOrder === 4
+    ) {
       let res = this.level;
-      for (let i = 0; i < this.tasks.length; i++) {
-        if (greaterThan(this.tasks[i].time, this.simulate.time()) && lessThanEq(this.tasks[i].time, plus(this.simulate.time(), this.dna.solver.timeStep))) {
-          res = plus(res, /** @type {ValueType} */(this.tasks[i].data.amnt));
+      for (
+        let i = 0;
+        i < this.tasks.length;
+        i++
+      ) {
+        if (
+          greaterThan(
+            this.tasks[i].time,
+            this.simulate.time(),
+          ) &&
+          lessThanEq(
+            this.tasks[i].time,
+            plus(
+              this.simulate.time(),
+              this.dna.solver.timeStep,
+            ),
+          )
+        ) {
+          res = plus(
+            res,
+            /** @type {ValueType} */ (
+              this.tasks[i].data.amnt
+            ),
+          );
         }
       }
       return res;
@@ -1658,7 +2119,6 @@ export class SStock extends SPrimitive {
     }
   }
 }
-
 
 export class SConverter extends SPrimitive {
   constructor(simulate) {
@@ -1669,7 +2129,7 @@ export class SConverter extends SPrimitive {
     this.constructorFunction = SConverter;
   }
 
-  innerClone() { }
+  innerClone() {}
 
   /**
    * @param {SPrimitive|string} source
@@ -1684,27 +2144,43 @@ export class SConverter extends SPrimitive {
   getInputValue() {
     if (this.source === "*time") {
       return this.simulate.time();
-    } else if (this.source instanceof SPrimitive) {
+    } else if (
+      this.source instanceof SPrimitive
+    ) {
       let inp = toNum(this.source.value());
       if (!inp) {
-        throw new ModelError("Undefined input value.", {
-          primitive: this.orig(),
-          showEditor: false,
-          code: 1199
-        });
+        throw new ModelError(
+          "Undefined input value.",
+          {
+            primitive: this.orig(),
+            showEditor: false,
+            code: 1199,
+          },
+        );
       }
 
-      if (!(inp instanceof Vector || inp instanceof Material)) {
-        throw new ModelError("Converter inputs must be numbers or vectors.", {
-          primitive: this.orig(),
-          showEditor: false,
-          code: 1200
-        });
+      if (
+        !(
+          inp instanceof Vector ||
+          inp instanceof Material
+        )
+      ) {
+        throw new ModelError(
+          "Converter inputs must be numbers or vectors.",
+          {
+            primitive: this.orig(),
+            showEditor: false,
+            code: 1200,
+          },
+        );
       }
 
       return inp;
     } else {
-      console.error("Invalid source", this.source);
+      console.error(
+        "Invalid source",
+        this.source,
+      );
       throw new Error("Invalid source");
     }
   }
@@ -1719,65 +2195,101 @@ export class SConverter extends SPrimitive {
   getOutputValue() {
     let input = this.getInputValue();
 
-
     let processItem = (inp) => {
       let processItemInner = (inp) => {
         if (!this.dna.inputs.length) {
           return new Material(0);
         }
-        for (let i = 0; i < this.dna.inputs.length; i++) {
-          if (this.dna.interpolation === "discrete") {
-
-            if (greaterThan(this.dna.inputs[i], inp)) {
+        for (
+          let i = 0;
+          i < this.dna.inputs.length;
+          i++
+        ) {
+          if (
+            this.dna.interpolation === "discrete"
+          ) {
+            if (
+              greaterThan(this.dna.inputs[i], inp)
+            ) {
               if (i === 0) {
                 return this.dna.outputs[0];
               } else {
                 return this.dna.outputs[i - 1];
               }
             }
-
-          } else if (this.dna.interpolation === "linear") {
+          } else if (
+            this.dna.interpolation === "linear"
+          ) {
             if (eq(this.dna.inputs[i], inp)) {
               return this.dna.outputs[i];
-            } else if (greaterThan(this.dna.inputs[i], inp)) {
+            } else if (
+              greaterThan(this.dna.inputs[i], inp)
+            ) {
               if (i === 0) {
                 return this.dna.outputs[0];
               } else {
                 let x = div(
                   plus(
-                    mult(minus(inp, this.dna.inputs[i - 1]), this.dna.outputs[i]),
-                    mult(minus(this.dna.inputs[i], inp), this.dna.outputs[i - 1])
+                    mult(
+                      minus(
+                        inp,
+                        this.dna.inputs[i - 1],
+                      ),
+                      this.dna.outputs[i],
+                    ),
+                    mult(
+                      minus(
+                        this.dna.inputs[i],
+                        inp,
+                      ),
+                      this.dna.outputs[i - 1],
+                    ),
                   ),
-                  minus(this.dna.inputs[i], this.dna.inputs[i - 1]));
+                  minus(
+                    this.dna.inputs[i],
+                    this.dna.inputs[i - 1],
+                  ),
+                );
                 return x;
               }
             }
           }
         }
 
-        return new Material(this.dna.outputs[this.dna.outputs.length - 1].value);
+        return new Material(
+          this.dna.outputs[
+            this.dna.outputs.length - 1
+          ].value,
+        );
       };
-      
-      let r = /** @type {Material} */ (processItemInner(inp));
-      return new Material(r.value, this.dna.units);
+
+      let r = /** @type {Material} */ (
+        processItemInner(inp)
+      );
+      return new Material(
+        r.value,
+        this.dna.units,
+      );
     };
-    
-    
+
     if (input instanceof Vector) {
-      return input.clone().recurseApply(processItem);
+      return input
+        .clone()
+        .recurseApply(processItem);
     } else if (input instanceof Material) {
       return processItem(input);
     } else {
-      throw new ModelError("Invalid input value.", {
-        primitive: this.orig(),
-        showEditor: false,
-        code: 1199
-      });
+      throw new ModelError(
+        "Invalid input value.",
+        {
+          primitive: this.orig(),
+          showEditor: false,
+          code: 1199,
+        },
+      );
     }
-
   }
 }
-
 
 export class SVariable extends SPrimitive {
   constructor(simulate) {
@@ -1786,10 +2298,14 @@ export class SVariable extends SPrimitive {
     this.constructorFunction = SVariable;
   }
 
-  innerClone() { }
+  innerClone() {}
 
   calculateValue() {
-    let x = evaluateTree(this.equation, localVars(this, this.simulate), this.simulate);
+    let x = evaluateTree(
+      this.equation,
+      localVars(this, this.simulate),
+      this.simulate,
+    );
     if (typeof x === "boolean") {
       if (x) {
         x = new Material(1);
@@ -1809,7 +2325,6 @@ export class SVariable extends SPrimitive {
     return x;
   }
 }
-
 
 export class SFlow extends SPrimitive {
   constructor(simulate) {
@@ -1833,7 +2348,7 @@ export class SFlow extends SPrimitive {
     this.constructorFunction = SFlow;
   }
 
-  innerClone() { }
+  innerClone() {}
 
   /**
    * @param {SStock} alpha
@@ -1857,13 +2372,38 @@ export class SFlow extends SPrimitive {
   }
 
   doRK4Aggregation() {
-    this.blendedRate = div(plus(plus(plus(this.RKPrimary[0], mult(new Material(2), this.RKPrimary[1])), mult(new Material(2), this.RKPrimary[2])), this.RKPrimary[3]), new Material(6));
+    this.blendedRate = div(
+      plus(
+        plus(
+          plus(
+            this.RKPrimary[0],
+            mult(
+              new Material(2),
+              this.RKPrimary[1],
+            ),
+          ),
+          mult(
+            new Material(2),
+            this.RKPrimary[2],
+          ),
+        ),
+        this.RKPrimary[3],
+      ),
+      new Material(6),
+    );
 
-    this.blendedRate = this.checkRate(this.blendedRate);
+    this.blendedRate = this.checkRate(
+      this.blendedRate,
+    );
   }
 
   checkRate(rate) {
-    let newRate = div(rate, new Material(this.dna.solver.timeStep.value));
+    let newRate = div(
+      rate,
+      new Material(
+        this.dna.solver.timeStep.value,
+      ),
+    );
 
     if (this.dna.nonNegative) {
       if (newRate instanceof Vector) {
@@ -1876,7 +2416,10 @@ export class SFlow extends SPrimitive {
         });
       } else {
         if (newRate.value <= 0) {
-          newRate = new Material(0, newRate.units);
+          newRate = new Material(
+            0,
+            newRate.units,
+          );
         }
       }
     }
@@ -1892,17 +2435,30 @@ export class SFlow extends SPrimitive {
       let x;
 
       try {
-        x = toNum(evaluateTree(this.equation, localVars(this, this.simulate), this.simulate));
+        x = toNum(
+          evaluateTree(
+            this.equation,
+            localVars(this, this.simulate),
+            this.simulate,
+          ),
+        );
 
-        if (!(x instanceof Vector || isFinite(x.value))) {
+        if (
+          !(
+            x instanceof Vector ||
+            isFinite(x.value)
+          )
+        ) {
           verifyValuedType(x, this);
-          throw new ModelError("The result of this calculation is not finite. Flows must have finite values. Are you dividing by 0?", {
-            primitive: this.orig(),
-            showEditor: true,
-            code: 1111
-          });
+          throw new ModelError(
+            "The result of this calculation is not finite. Flows must have finite values. Are you dividing by 0?",
+            {
+              primitive: this.orig(),
+              showEditor: true,
+              code: 1111,
+            },
+          );
         }
-
       } catch (err) {
         if (err instanceof ModelError) {
           if (err.primitive && err.showEditor) {
@@ -1911,7 +2467,7 @@ export class SFlow extends SPrimitive {
           throw new ModelError(err.message, {
             primitive: this.orig(),
             showEditor: true,
-            code: 1100
+            code: 1100,
           });
         } else {
           throw err;
@@ -1930,21 +2486,26 @@ export class SFlow extends SPrimitive {
 
       // Units are display-only: skip unit assignment on rate
 
-
       this.testUnits(this.rate, true);
 
-      this.rate = mult(this.rate, new Material(this.dna.solver.timeStep.value));
+      this.rate = mult(
+        this.rate,
+        new Material(
+          this.dna.solver.timeStep.value,
+        ),
+      );
 
       if (override) {
         if (this.RKPrimary.length > 0) {
-          this.RKPrimary[this.RKPrimary.length - 1] = this.rate;
+          this.RKPrimary[
+            this.RKPrimary.length - 1
+          ] = this.rate;
         } else {
           this.RKPrimary.push(this.rate);
         }
       } else {
         this.RKPrimary.push(this.rate);
       }
-
 
       this.rate = this.checkRate(this.rate);
     }
@@ -1957,17 +2518,26 @@ export class SFlow extends SPrimitive {
    * @returns
    */
   apply(timeChange, oldTime) {
-
     try {
-      if (this.rate === null && this.blendedRate === null) {
+      if (
+        this.rate === null &&
+        this.blendedRate === null
+      ) {
         return;
       }
 
-      let rate = this.blendedRate ? this.blendedRate.fullClone() : this.rate.fullClone();
+      let rate = this.blendedRate
+        ? this.blendedRate.fullClone()
+        : this.rate.fullClone();
 
-      rate = mult(rate, new Material(timeChange.value != null ? timeChange.value : timeChange));
-
-
+      rate = mult(
+        rate,
+        new Material(
+          timeChange.value != null
+            ? timeChange.value
+            : timeChange,
+        ),
+      );
 
       let inRate = rate;
       let outRate = rate;
@@ -1975,45 +2545,79 @@ export class SFlow extends SPrimitive {
 
       if (this.alpha !== null) {
         let v = this.alpha.level;
-        if (rate instanceof Vector && (!(v instanceof Vector) || v.depth() < rate.depth())) {
-          inRate = rate.fullClone().collapseDimensions(v);
+        if (
+          rate instanceof Vector &&
+          (!(v instanceof Vector) ||
+            v.depth() < rate.depth())
+        ) {
+          inRate = rate
+            .fullClone()
+            .collapseDimensions(v);
           collapsed = true;
-        } else if (v instanceof Vector && (!(rate instanceof Vector) || v.depth() > rate.depth())) {
-          throw new ModelError("The start of the flow is a vector with a higher order than the flow rate. There has to be at least one element in the flow rate for each element in the start.", {
-            primitive: this.orig(),
-            showEditor: true,
-            code: 1201
-          });
+        } else if (
+          v instanceof Vector &&
+          (!(rate instanceof Vector) ||
+            v.depth() > rate.depth())
+        ) {
+          throw new ModelError(
+            "The start of the flow is a vector with a higher order than the flow rate. There has to be at least one element in the flow rate for each element in the start.",
+            {
+              primitive: this.orig(),
+              showEditor: true,
+              code: 1201,
+            },
+          );
         }
       }
       if (this.omega !== null) {
         let v = this.omega.level;
-        if (rate instanceof Vector && (!(v instanceof Vector) || v.depth() < rate.depth())) {
-          outRate = rate.fullClone().collapseDimensions(v);
+        if (
+          rate instanceof Vector &&
+          (!(v instanceof Vector) ||
+            v.depth() < rate.depth())
+        ) {
+          outRate = rate
+            .fullClone()
+            .collapseDimensions(v);
           collapsed = true;
-        } else if (v instanceof Vector && (!(rate instanceof Vector) || v.depth() > rate.depth())) {
-          throw new ModelError("The end of the flow is a vector with a higher order than the flow rate. There has to be at least one element in the flow rate for each element in the end.", {
-            primitive: this.orig(),
-            showEditor: true,
-            code: 1202
-          });
+        } else if (
+          v instanceof Vector &&
+          (!(rate instanceof Vector) ||
+            v.depth() > rate.depth())
+        ) {
+          throw new ModelError(
+            "The end of the flow is a vector with a higher order than the flow rate. There has to be at least one element in the flow rate for each element in the end.",
+            {
+              primitive: this.orig(),
+              showEditor: true,
+              code: 1202,
+            },
+          );
         }
       }
 
       if (!collapsed) {
-
-        if (this.omega !== null && this.omega.dna.nonNegative) {
+        if (
+          this.omega !== null &&
+          this.omega.dna.nonNegative
+        ) {
           let modifier;
           try {
             // Omega + Flow: value(s) will be negative if we need to make
             // an adjustment to maintain non-negativity
-            modifier = plus(toNum(this.omega.level), rate);
+            modifier = plus(
+              toNum(this.omega.level),
+              rate,
+            );
           } catch (err) {
-            throw new ModelError(`Incompatible units for flow <i>[${toHTML(this.dna.name)}]</i> and connected stock <i>[${toHTML(this.omega.dna.name)}]</i>. Stock has units of <i>${this.omega.dna.units ? this.omega.dna.units.toString() : "unitless"}</i>. The flow should have the equivalent units divided by some time unit such as Years.`, {
-              primitive: this.orig(),
-              showEditor: false,
-              code: 1203
-            });
+            throw new ModelError(
+              `Incompatible units for flow <i>[${toHTML(this.dna.name)}]</i> and connected stock <i>[${toHTML(this.omega.dna.name)}]</i>. Stock has units of <i>${this.omega.dna.units ? this.omega.dna.units.toString() : "unitless"}</i>. The flow should have the equivalent units divided by some time unit such as Years.`,
+              {
+                primitive: this.orig(),
+                showEditor: false,
+                code: 1203,
+              },
+            );
           }
           if (modifier instanceof Vector) {
             modifier.recurseApply((x) => {
@@ -2029,23 +2633,34 @@ export class SFlow extends SPrimitive {
             rate = minus(rate, modifier);
           } else {
             if (modifier.value < 0) {
-              rate = negate(toNum(this.omega.level));
+              rate = negate(
+                toNum(this.omega.level),
+              );
             }
           }
         }
 
-        if (this.alpha !== null && this.alpha.dna.nonNegative) {
+        if (
+          this.alpha !== null &&
+          this.alpha.dna.nonNegative
+        ) {
           let modifier;
           try {
             // Alpha - Flow: value(s) will be negative if we need to make
             // an adjustment to maintain non-negativity
-            modifier = minus(toNum(this.alpha.level), rate);
+            modifier = minus(
+              toNum(this.alpha.level),
+              rate,
+            );
           } catch (err) {
-            throw new ModelError(`Incompatible units for flow <i>[${toHTML(this.dna.name)}]</i> and connected stock <i>[${toHTML(this.alpha.dna.name)}]</i>. Stock has units of <i>${this.alpha.dna.units ? this.alpha.dna.units.toString() : "unitless"}</i>. The flow should have the equivalent units divided by some time unit such as Years.`, {
-              primitive: this.orig(),
-              showEditor: false,
-              code: 1204
-            });
+            throw new ModelError(
+              `Incompatible units for flow <i>[${toHTML(this.dna.name)}]</i> and connected stock <i>[${toHTML(this.alpha.dna.name)}]</i>. Stock has units of <i>${this.alpha.dna.units ? this.alpha.dna.units.toString() : "unitless"}</i>. The flow should have the equivalent units divided by some time unit such as Years.`,
+              {
+                primitive: this.orig(),
+                showEditor: false,
+                code: 1204,
+              },
+            );
           }
           if (modifier instanceof Vector) {
             modifier.recurseApply((x) => {
@@ -2066,44 +2681,78 @@ export class SFlow extends SPrimitive {
           }
         }
 
-        if (this.omega && this.omega.dna.nonNegative) {
+        if (
+          this.omega &&
+          this.omega.dna.nonNegative
+        ) {
           if (rate instanceof Vector) {
             /** @type {Vector} */
-            let vec = this.simulate.coreBank.get("flatten")([plus(toNum(this.omega.level), rate)]);
+            let vec = this.simulate.coreBank.get(
+              "flatten",
+            )([
+              plus(toNum(this.omega.level), rate),
+            ]);
             for (let item of vec.items) {
-              if (item instanceof Material && item.value < 0) {
-                throw new ModelError("Inconsistent non-negative constraints for flow.", {
-                  primitive: this.orig(),
-                  showEditor: false,
-                  code: 1205
-                });
+              if (
+                item instanceof Material &&
+                item.value < 0
+              ) {
+                throw new ModelError(
+                  "Inconsistent non-negative constraints for flow.",
+                  {
+                    primitive: this.orig(),
+                    showEditor: false,
+                    code: 1205,
+                  },
+                );
               }
             }
           } else {
-            let n = plus(toNum(this.omega.level), rate);
-            if (n instanceof Material && n.value < 0) {
-              throw new ModelError("Inconsistent non-negative constraints for flow.", {
-                primitive: this.orig(),
-                showEditor: false,
-                code: 1206
-              });
+            let n = plus(
+              toNum(this.omega.level),
+              rate,
+            );
+            if (
+              n instanceof Material &&
+              n.value < 0
+            ) {
+              throw new ModelError(
+                "Inconsistent non-negative constraints for flow.",
+                {
+                  primitive: this.orig(),
+                  showEditor: false,
+                  code: 1206,
+                },
+              );
             }
           }
         }
       } else {
-        if (this.alpha && this.alpha.dna.nonNegative) {
-          throw new ModelError("Cannot use non-negative stocks when the flow rate is a vector that needs to be collapsed.", {
-            primitive: this.alpha.dna.primitive,
-            showEditor: false,
-            code: 1207
-          });
+        if (
+          this.alpha &&
+          this.alpha.dna.nonNegative
+        ) {
+          throw new ModelError(
+            "Cannot use non-negative stocks when the flow rate is a vector that needs to be collapsed.",
+            {
+              primitive: this.alpha.dna.primitive,
+              showEditor: false,
+              code: 1207,
+            },
+          );
         }
-        if (this.omega && this.omega.dna.nonNegative) {
-          throw new ModelError("Cannot use non-negative stocks when the flow rate is a vector that needs to be collapsed.", {
-            primitive: this.omega.dna.primitive,
-            showEditor: false,
-            code: 1208
-          });
+        if (
+          this.omega &&
+          this.omega.dna.nonNegative
+        ) {
+          throw new ModelError(
+            "Cannot use non-negative stocks when the flow rate is a vector that needs to be collapsed.",
+            {
+              primitive: this.omega.dna.primitive,
+              showEditor: false,
+              code: 1208,
+            },
+          );
         }
       }
 
@@ -2135,21 +2784,29 @@ export class SFlow extends SPrimitive {
           stock = this.alpha;
         }
 
-        if (err.code === 2000 || err.code === 2001) {
-          throw new ModelError(`Incompatible vector keys for flow <i>[${toHTML(this.dna.name)}]</i> and connected stock <i>[${toHTML(stock.dna.name)}]</i>.`, {
-            primitive: this.orig(),
-            showEditor: false,
-            code: 1209
-          });
+        if (
+          err.code === 2000 ||
+          err.code === 2001
+        ) {
+          throw new ModelError(
+            `Incompatible vector keys for flow <i>[${toHTML(this.dna.name)}]</i> and connected stock <i>[${toHTML(stock.dna.name)}]</i>.`,
+            {
+              primitive: this.orig(),
+              showEditor: false,
+              code: 1209,
+            },
+          );
         } else {
-          throw new ModelError(`Incompatible units for flow <i>[${toHTML(this.dna.name)}]</i> and connected stock <i>[${toHTML(stock.dna.name)}]</i>. Stock has units of <i>${stock.dna.units ? stock.dna.units.toString() : "unitless"}</i>. The flow should have the equivalent units divided by some time unit such as Years.`, {
-            primitive: this.orig(),
-            showEditor: false,
-            code: 1210
-          });
+          throw new ModelError(
+            `Incompatible units for flow <i>[${toHTML(this.dna.name)}]</i> and connected stock <i>[${toHTML(stock.dna.name)}]</i>. Stock has units of <i>${stock.dna.units ? stock.dna.units.toString() : "unitless"}</i>. The flow should have the equivalent units divided by some time unit such as Years.`,
+            {
+              primitive: this.orig(),
+              showEditor: false,
+              code: 1210,
+            },
+          );
         }
       }
-
     } catch (err) {
       if (err instanceof ModelError) {
         if (err.primitive && err.showEditor) {
@@ -2158,7 +2815,7 @@ export class SFlow extends SPrimitive {
         throw new ModelError(err.message, {
           primitive: this.orig(),
           showEditor: true,
-          code: 1102
+          code: 1102,
         });
       } else {
         throw err;
@@ -2167,11 +2824,10 @@ export class SFlow extends SPrimitive {
   }
 }
 
-
 /**
  * @param {SPrimitive} primitive
  * @param {import("./Simulator").Simulator} simulate
- * 
+ *
  * @return {Map<PARENT_SYMBOL|string, any>}
  */
 function localVars(primitive, simulate) {
@@ -2179,21 +2835,20 @@ function localVars(primitive, simulate) {
     // @ts-ignore
     return new Map([
       [PARENT_SYMBOL, simulate.varBank],
-      ["self", primitive]
+      ["self", primitive],
     ]);
   } else if (primitive.container) {
     // @ts-ignore
     return new Map([
-      [PARENT_SYMBOL, simulate.varBank], 
-      ["self", primitive.container]
+      [PARENT_SYMBOL, simulate.varBank],
+      ["self", primitive.container],
     ]);
   } else {
     return new Map([
-      [PARENT_SYMBOL, simulate.varBank]
+      [PARENT_SYMBOL, simulate.varBank],
     ]);
   }
 }
-
 
 /**
  * @param {SPrimitive} item
@@ -2201,12 +2856,30 @@ function localVars(primitive, simulate) {
  * @param {Material} val
  * @param {import("./Simulator").Simulator} simulate
  */
-function constraintAlert(item, type, val, simulate) {
-  let msg = "The " + (type === "max" ? "maximum" : "minimum") + " constraint on the primitive [<i>" + toHTML(simulate.model.getId(item.id).name) + "</i>] has been violated. The primitive's value attempted to become " + toHTML("" + val.value) + " when the " + (type === "max" ? "maximum" : "minimum") + " allowed value is " + (type === "max" ? item.dna.maxConstraint : item.dna.minConstraint) + ".";
+function constraintAlert(
+  item,
+  type,
+  val,
+  simulate,
+) {
+  let msg =
+    "The " +
+    (type === "max" ? "maximum" : "minimum") +
+    " constraint on the primitive [<i>" +
+    toHTML(simulate.model.getId(item.id).name) +
+    "</i>] has been violated. The primitive's value attempted to become " +
+    toHTML("" + val.value) +
+    " when the " +
+    (type === "max" ? "maximum" : "minimum") +
+    " allowed value is " +
+    (type === "max"
+      ? item.dna.maxConstraint
+      : item.dna.minConstraint) +
+    ".";
 
   throw new ModelError(msg, {
     primitive: item.dna.primitive,
     showEditor: false,
-    code: 1150
+    code: 1150,
   });
 }
