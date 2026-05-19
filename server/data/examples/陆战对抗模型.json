@@ -1,0 +1,519 @@
+{
+  "name": "陆战对抗模型",
+  "description": "基于兰彻斯特方程的简化陆战对抗模型，模拟红蓝双方兵力消耗、增援投入和士气影响，展示地面作战中攻防对抗的系统动力学特征。",
+  "engine": "SIMULATION_PACKAGE",
+  "simulation": {
+    "algorithm": "RK4",
+    "time_start": 0,
+    "time_length": 48,
+    "time_step": 0.5,
+    "time_units": "HOURS"
+  },
+  "elements": [
+    {
+      "type": "STOCK",
+      "name": "红方兵力",
+      "behavior": {
+        "initial_value": 500,
+        "non_negative": true,
+        "units": ""
+      },
+      "display": {
+        "coordinates": [100, 300],
+        "size": [150, 60]
+      }
+    },
+    {
+      "type": "STOCK",
+      "name": "蓝方兵力",
+      "behavior": {
+        "initial_value": 400,
+        "non_negative": true,
+        "units": ""
+      },
+      "display": {
+        "coordinates": [800, 300],
+        "size": [150, 60]
+      }
+    },
+    {
+      "type": "STOCK",
+      "name": "红方士气",
+      "behavior": {
+        "initial_value": 85,
+        "non_negative": true,
+        "units": ""
+      },
+      "display": {
+        "coordinates": [100, 550],
+        "size": [150, 60]
+      }
+    },
+    {
+      "type": "STOCK",
+      "name": "蓝方士气",
+      "behavior": {
+        "initial_value": 80,
+        "non_negative": true,
+        "units": ""
+      },
+      "display": {
+        "coordinates": [800, 550],
+        "size": [150, 60]
+      }
+    },
+    {
+      "type": "VARIABLE",
+      "name": "红方战斗力系数",
+      "behavior": {
+        "value": "0.015",
+        "units": ""
+      },
+      "display": {
+        "coordinates": [250, 150],
+        "size": [150, 60]
+      }
+    },
+    {
+      "type": "VARIABLE",
+      "name": "蓝方战斗力系数",
+      "behavior": {
+        "value": "0.012",
+        "units": ""
+      },
+      "display": {
+        "coordinates": [950, 150],
+        "size": [150, 60]
+      }
+    },
+    {
+      "type": "VARIABLE",
+      "name": "红方增援率",
+      "behavior": {
+        "value": "5",
+        "units": ""
+      },
+      "display": {
+        "coordinates": [50, 150],
+        "size": [130, 60]
+      }
+    },
+    {
+      "type": "VARIABLE",
+      "name": "蓝方增援率",
+      "behavior": {
+        "value": "4",
+        "units": ""
+      },
+      "display": {
+        "coordinates": [1000, 70],
+        "size": [130, 60]
+      }
+    },
+    {
+      "type": "VARIABLE",
+      "name": "红方防御优势",
+      "behavior": {
+        "value": "1.2",
+        "units": ""
+      },
+      "display": {
+        "coordinates": [250, 450],
+        "size": [130, 60]
+      }
+    },
+    {
+      "type": "VARIABLE",
+      "name": "士气影响系数",
+      "behavior": {
+        "value": "0.01",
+        "units": ""
+      },
+      "display": {
+        "coordinates": [550, 450],
+        "size": [150, 60]
+      }
+    },
+    {
+      "type": "CONVERTER",
+      "name": "红方士气效应",
+      "behavior": {
+        "input": "ELEMENT",
+        "input_element": "红方士气",
+        "interpolation": "LINEAR",
+        "units": "",
+        "data": [
+          [0, 0.2],
+          [20, 0.5],
+          [40, 0.7],
+          [60, 0.85],
+          [80, 0.95],
+          [100, 1.0]
+        ]
+      },
+      "display": {
+        "coordinates": [100, 700],
+        "size": [120, 70]
+      }
+    },
+    {
+      "type": "CONVERTER",
+      "name": "蓝方士气效应",
+      "behavior": {
+        "input": "ELEMENT",
+        "input_element": "蓝方士气",
+        "interpolation": "LINEAR",
+        "units": "",
+        "data": [
+          [0, 0.2],
+          [20, 0.5],
+          [40, 0.7],
+          [60, 0.85],
+          [80, 0.95],
+          [100, 1.0]
+        ]
+      },
+      "display": {
+        "coordinates": [800, 700],
+        "size": [120, 70]
+      }
+    },
+    {
+      "type": "CONVERTER",
+      "name": "地形因子",
+      "behavior": {
+        "input": "TIME",
+        "interpolation": "LINEAR",
+        "units": "",
+        "data": [
+          [0, 1.0],
+          [12, 1.1],
+          [24, 1.0],
+          [36, 0.9],
+          [48, 1.0]
+        ]
+      },
+      "display": {
+        "coordinates": [550, 100],
+        "size": [120, 70]
+      }
+    },
+    {
+      "type": "FLOW",
+      "name": "红方增援",
+      "from": null,
+      "to": "红方兵力",
+      "behavior": {
+        "value": "[红方增援率] * [红方士气效应]",
+        "non_negative": true,
+        "units": ""
+      },
+      "display": {
+        "from_coordinates": [20, 330]
+      }
+    },
+    {
+      "type": "FLOW",
+      "name": "红方损失",
+      "from": "红方兵力",
+      "to": null,
+      "behavior": {
+        "value": "[蓝方兵力] * [蓝方战斗力系数] * [地形因子] * [蓝方士气效应]",
+        "non_negative": true,
+        "units": ""
+      },
+      "display": {
+        "to_coordinates": [280, 260]
+      }
+    },
+    {
+      "type": "FLOW",
+      "name": "蓝方增援",
+      "from": null,
+      "to": "蓝方兵力",
+      "behavior": {
+        "value": "[蓝方增援率] * [蓝方士气效应]",
+        "non_negative": true,
+        "units": ""
+      },
+      "display": {
+        "from_coordinates": [1130, 330]
+      }
+    },
+    {
+      "type": "FLOW",
+      "name": "蓝方损失",
+      "from": "蓝方兵力",
+      "to": null,
+      "behavior": {
+        "value": "[红方兵力] * [红方战斗力系数] * [红方防御优势] * [地形因子] * [红方士气效应]",
+        "non_negative": true,
+        "units": ""
+      },
+      "display": {
+        "to_coordinates": [720, 260]
+      }
+    },
+    {
+      "type": "FLOW",
+      "name": "红方士气下降",
+      "from": "红方士气",
+      "to": null,
+      "behavior": {
+        "value": "[红方损失] * [士气影响系数] + 0.5",
+        "non_negative": true,
+        "units": ""
+      },
+      "display": {
+        "to_coordinates": [50, 640]
+      }
+    },
+    {
+      "type": "FLOW",
+      "name": "红方士气恢复",
+      "from": null,
+      "to": "红方士气",
+      "behavior": {
+        "value": "[红方士气效应] * (100 - [红方士气]) * 0.02",
+        "non_negative": true,
+        "units": ""
+      },
+      "display": {
+        "from_coordinates": [20, 560]
+      }
+    },
+    {
+      "type": "FLOW",
+      "name": "蓝方士气下降",
+      "from": "蓝方士气",
+      "to": null,
+      "behavior": {
+        "value": "[蓝方损失] * [士气影响系数] + 0.5",
+        "non_negative": true,
+        "units": ""
+      },
+      "display": {
+        "to_coordinates": [950, 640]
+      }
+    },
+    {
+      "type": "FLOW",
+      "name": "蓝方士气恢复",
+      "from": null,
+      "to": "蓝方士气",
+      "behavior": {
+        "value": "[蓝方士气效应] * (100 - [蓝方士气]) * 0.02",
+        "non_negative": true,
+        "units": ""
+      },
+      "display": {
+        "from_coordinates": [970, 560]
+      }
+    },
+    {
+      "type": "LINK",
+      "name": "",
+      "from": "红方增援率",
+      "to": "红方增援",
+      "behavior": {},
+      "display": {}
+    },
+    {
+      "type": "LINK",
+      "name": "",
+      "from": "红方士气",
+      "to": "红方士气效应",
+      "behavior": {},
+      "display": {}
+    },
+    {
+      "type": "LINK",
+      "name": "",
+      "from": "红方士气效应",
+      "to": "红方增援",
+      "behavior": {},
+      "display": {}
+    },
+    {
+      "type": "LINK",
+      "name": "",
+      "from": "蓝方兵力",
+      "to": "红方损失",
+      "behavior": {},
+      "display": {}
+    },
+    {
+      "type": "LINK",
+      "name": "",
+      "from": "蓝方战斗力系数",
+      "to": "红方损失",
+      "behavior": {},
+      "display": {}
+    },
+    {
+      "type": "LINK",
+      "name": "",
+      "from": "地形因子",
+      "to": "红方损失",
+      "behavior": {},
+      "display": {}
+    },
+    {
+      "type": "LINK",
+      "name": "",
+      "from": "蓝方士气效应",
+      "to": "红方损失",
+      "behavior": {},
+      "display": {}
+    },
+    {
+      "type": "LINK",
+      "name": "",
+      "from": "蓝方增援率",
+      "to": "蓝方增援",
+      "behavior": {},
+      "display": {}
+    },
+    {
+      "type": "LINK",
+      "name": "",
+      "from": "蓝方士气",
+      "to": "蓝方士气效应",
+      "behavior": {},
+      "display": {}
+    },
+    {
+      "type": "LINK",
+      "name": "",
+      "from": "蓝方士气效应",
+      "to": "蓝方增援",
+      "behavior": {},
+      "display": {}
+    },
+    {
+      "type": "LINK",
+      "name": "",
+      "from": "红方兵力",
+      "to": "蓝方损失",
+      "behavior": {},
+      "display": {}
+    },
+    {
+      "type": "LINK",
+      "name": "",
+      "from": "红方战斗力系数",
+      "to": "蓝方损失",
+      "behavior": {},
+      "display": {}
+    },
+    {
+      "type": "LINK",
+      "name": "",
+      "from": "红方防御优势",
+      "to": "蓝方损失",
+      "behavior": {},
+      "display": {}
+    },
+    {
+      "type": "LINK",
+      "name": "",
+      "from": "地形因子",
+      "to": "蓝方损失",
+      "behavior": {},
+      "display": {}
+    },
+    {
+      "type": "LINK",
+      "name": "",
+      "from": "红方士气效应",
+      "to": "蓝方损失",
+      "behavior": {},
+      "display": {}
+    },
+    {
+      "type": "LINK",
+      "name": "",
+      "from": "红方损失",
+      "to": "红方士气下降",
+      "behavior": {},
+      "display": {}
+    },
+    {
+      "type": "LINK",
+      "name": "",
+      "from": "士气影响系数",
+      "to": "红方士气下降",
+      "behavior": {},
+      "display": {}
+    },
+    {
+      "type": "LINK",
+      "name": "",
+      "from": "红方士气效应",
+      "to": "红方士气恢复",
+      "behavior": {},
+      "display": {}
+    },
+    {
+      "type": "LINK",
+      "name": "",
+      "from": "蓝方损失",
+      "to": "蓝方士气下降",
+      "behavior": {},
+      "display": {}
+    },
+    {
+      "type": "LINK",
+      "name": "",
+      "from": "士气影响系数",
+      "to": "蓝方士气下降",
+      "behavior": {},
+      "display": {}
+    },
+    {
+      "type": "LINK",
+      "name": "",
+      "from": "蓝方士气效应",
+      "to": "蓝方士气恢复",
+      "behavior": {},
+      "display": {}
+    }
+  ],
+  "groups": [
+    {
+      "name": "红方",
+      "color": "#ef4444",
+      "collapsed": false,
+      "childNames": [
+        "红方兵力",
+        "红方士气",
+        "红方战斗力系数",
+        "红方增援率",
+        "红方防御优势",
+        "红方士气效应"
+      ]
+    },
+    {
+      "name": "蓝方",
+      "color": "#3b82f6",
+      "collapsed": false,
+      "childNames": [
+        "蓝方兵力",
+        "蓝方士气",
+        "蓝方战斗力系数",
+        "蓝方增援率",
+        "蓝方士气效应"
+      ]
+    },
+    {
+      "name": "战场环境",
+      "color": "#10b981",
+      "collapsed": false,
+      "childNames": [
+        "地形因子",
+        "士气影响系数"
+      ]
+    }
+  ],
+  "visualizations": []
+}

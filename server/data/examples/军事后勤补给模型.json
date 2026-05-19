@@ -1,0 +1,454 @@
+{
+  "name": "军事后勤补给模型",
+  "description": "模拟军事行动中从后方仓库到前线部队的多级物资补给链条，包含生产供应、运输调度、前线消耗与战斗损耗等关键环节。",
+  "engine": "SIMULATION_PACKAGE",
+  "simulation": {
+    "algorithm": "RK4",
+    "time_start": 0,
+    "time_length": 30,
+    "time_step": 0.5,
+    "time_units": "DAYS"
+  },
+  "elements": [
+    {
+      "type": "STOCK",
+      "name": "后方仓库",
+      "behavior": {
+        "initial_value": 10000,
+        "non_negative": true,
+        "units": ""
+      },
+      "display": {
+        "coordinates": [150, 350],
+        "size": [150, 60]
+      }
+    },
+    {
+      "type": "STOCK",
+      "name": "在途物资",
+      "behavior": {
+        "initial_value": 500,
+        "non_negative": true,
+        "units": ""
+      },
+      "display": {
+        "coordinates": [600, 350],
+        "size": [150, 60]
+      }
+    },
+    {
+      "type": "STOCK",
+      "name": "前线储备",
+      "behavior": {
+        "initial_value": 2000,
+        "non_negative": true,
+        "units": ""
+      },
+      "display": {
+        "coordinates": [1050, 350],
+        "size": [150, 60]
+      }
+    },
+    {
+      "type": "STOCK",
+      "name": "部队士气",
+      "behavior": {
+        "initial_value": 80,
+        "non_negative": true,
+        "units": ""
+      },
+      "display": {
+        "coordinates": [1500, 350],
+        "size": [150, 60]
+      }
+    },
+    {
+      "type": "VARIABLE",
+      "name": "生产速率",
+      "behavior": {
+        "value": "300",
+        "units": ""
+      },
+      "display": {
+        "coordinates": [50, 120],
+        "size": [130, 60]
+      }
+    },
+    {
+      "type": "VARIABLE",
+      "name": "运输能力",
+      "behavior": {
+        "value": "200",
+        "units": ""
+      },
+      "display": {
+        "coordinates": [400, 120],
+        "size": [130, 60]
+      }
+    },
+    {
+      "type": "CONVERTER",
+      "name": "战场强度",
+      "behavior": {
+        "input": "TIME",
+        "interpolation": "LINEAR",
+        "units": "",
+        "data": [
+          [0, 0.5],
+          [5, 0.7],
+          [10, 1.0],
+          [15, 1.2],
+          [20, 0.9],
+          [30, 0.6]
+        ]
+      },
+      "display": {
+        "coordinates": [850, 120],
+        "size": [120, 70]
+      }
+    },
+    {
+      "type": "VARIABLE",
+      "name": "前线消耗率",
+      "behavior": {
+        "value": "0.08",
+        "units": ""
+      },
+      "display": {
+        "coordinates": [1250, 120],
+        "size": [130, 60]
+      }
+    },
+    {
+      "type": "VARIABLE",
+      "name": "士气恢复率",
+      "behavior": {
+        "value": "0.05",
+        "units": ""
+      },
+      "display": {
+        "coordinates": [1650, 120],
+        "size": [130, 60]
+      }
+    },
+    {
+      "type": "VARIABLE",
+      "name": "运输延迟",
+      "behavior": {
+        "value": "0.2",
+        "units": ""
+      },
+      "display": {
+        "coordinates": [600, 600],
+        "size": [130, 60]
+      }
+    },
+    {
+      "type": "VARIABLE",
+      "name": "战斗损耗率",
+      "behavior": {
+        "value": "0.03",
+        "units": ""
+      },
+      "display": {
+        "coordinates": [1050, 600],
+        "size": [130, 60]
+      }
+    },
+    {
+      "type": "CONVERTER",
+      "name": "补给充足度",
+      "behavior": {
+        "input": "ELEMENT",
+        "input_element": "前线储备",
+        "interpolation": "LINEAR",
+        "units": "",
+        "data": [
+          [0, 0],
+          [500, 0.3],
+          [1000, 0.6],
+          [2000, 0.85],
+          [5000, 0.95],
+          [10000, 1.0]
+        ]
+      },
+      "display": {
+        "coordinates": [1400, 600],
+        "size": [120, 70]
+      }
+    },
+    {
+      "type": "FLOW",
+      "name": "物资生产",
+      "from": null,
+      "to": "后方仓库",
+      "behavior": {
+        "value": "[生产速率]",
+        "non_negative": true,
+        "units": ""
+      },
+      "display": {
+        "from_coordinates": [50, 310]
+      }
+    },
+    {
+      "type": "FLOW",
+      "name": "物资发运",
+      "from": "后方仓库",
+      "to": "在途物资",
+      "behavior": {
+        "value": "min([后方仓库], [运输能力])",
+        "non_negative": true,
+        "units": ""
+      },
+      "display": {}
+    },
+    {
+      "type": "FLOW",
+      "name": "物资送达",
+      "from": "在途物资",
+      "to": "前线储备",
+      "behavior": {
+        "value": "[在途物资] * [运输延迟]",
+        "non_negative": true,
+        "units": ""
+      },
+      "display": {}
+    },
+    {
+      "type": "FLOW",
+      "name": "日常消耗",
+      "from": "前线储备",
+      "to": null,
+      "behavior": {
+        "value": "[前线储备] * [前线消耗率] * [战场强度]",
+        "non_negative": true,
+        "units": ""
+      },
+      "display": {
+        "to_coordinates": [1250, 330]
+      }
+    },
+    {
+      "type": "FLOW",
+      "name": "战斗损耗",
+      "from": "前线储备",
+      "to": null,
+      "behavior": {
+        "value": "[前线储备] * [战斗损耗率] * [战场强度]",
+        "non_negative": true,
+        "units": ""
+      },
+      "display": {
+        "to_coordinates": [1250, 430]
+      }
+    },
+    {
+      "type": "FLOW",
+      "name": "士气提升",
+      "from": null,
+      "to": "部队士气",
+      "behavior": {
+        "value": "[补给充足度] * [士气恢复率] * (100 - [部队士气])",
+        "non_negative": true,
+        "units": ""
+      },
+      "display": {
+        "from_coordinates": [1500, 200]
+      }
+    },
+    {
+      "type": "FLOW",
+      "name": "士气下降",
+      "from": "部队士气",
+      "to": null,
+      "behavior": {
+        "value": "(1 - [补给充足度]) * [战场强度] * 2",
+        "non_negative": true,
+        "units": ""
+      },
+      "display": {
+        "to_coordinates": [1700, 360]
+      }
+    },
+    {
+      "type": "LINK",
+      "name": "",
+      "from": "生产速率",
+      "to": "物资生产",
+      "behavior": {},
+      "display": {}
+    },
+    {
+      "type": "LINK",
+      "name": "",
+      "from": "后方仓库",
+      "to": "物资发运",
+      "behavior": {},
+      "display": {}
+    },
+    {
+      "type": "LINK",
+      "name": "",
+      "from": "运输能力",
+      "to": "物资发运",
+      "behavior": {},
+      "display": {}
+    },
+    {
+      "type": "LINK",
+      "name": "",
+      "from": "在途物资",
+      "to": "物资送达",
+      "behavior": {},
+      "display": {}
+    },
+    {
+      "type": "LINK",
+      "name": "",
+      "from": "运输延迟",
+      "to": "物资送达",
+      "behavior": {},
+      "display": {}
+    },
+    {
+      "type": "LINK",
+      "name": "",
+      "from": "前线储备",
+      "to": "日常消耗",
+      "behavior": {},
+      "display": {}
+    },
+    {
+      "type": "LINK",
+      "name": "",
+      "from": "前线消耗率",
+      "to": "日常消耗",
+      "behavior": {},
+      "display": {}
+    },
+    {
+      "type": "LINK",
+      "name": "",
+      "from": "战场强度",
+      "to": "日常消耗",
+      "behavior": {},
+      "display": {}
+    },
+    {
+      "type": "LINK",
+      "name": "",
+      "from": "前线储备",
+      "to": "战斗损耗",
+      "behavior": {},
+      "display": {}
+    },
+    {
+      "type": "LINK",
+      "name": "",
+      "from": "战斗损耗率",
+      "to": "战斗损耗",
+      "behavior": {},
+      "display": {}
+    },
+    {
+      "type": "LINK",
+      "name": "",
+      "from": "战场强度",
+      "to": "战斗损耗",
+      "behavior": {},
+      "display": {}
+    },
+    {
+      "type": "LINK",
+      "name": "",
+      "from": "前线储备",
+      "to": "补给充足度",
+      "behavior": {},
+      "display": {}
+    },
+    {
+      "type": "LINK",
+      "name": "",
+      "from": "补给充足度",
+      "to": "士气提升",
+      "behavior": {},
+      "display": {}
+    },
+    {
+      "type": "LINK",
+      "name": "",
+      "from": "士气恢复率",
+      "to": "士气提升",
+      "behavior": {},
+      "display": {}
+    },
+    {
+      "type": "LINK",
+      "name": "",
+      "from": "部队士气",
+      "to": "士气提升",
+      "behavior": {},
+      "display": {}
+    },
+    {
+      "type": "LINK",
+      "name": "",
+      "from": "补给充足度",
+      "to": "士气下降",
+      "behavior": {},
+      "display": {}
+    },
+    {
+      "type": "LINK",
+      "name": "",
+      "from": "战场强度",
+      "to": "士气下降",
+      "behavior": {},
+      "display": {}
+    }
+  ],
+  "groups": [
+    {
+      "name": "后方保障",
+      "color": "#3b82f6",
+      "collapsed": false,
+      "childNames": [
+        "后方仓库",
+        "生产速率",
+        "运输能力"
+      ]
+    },
+    {
+      "name": "运输链路",
+      "color": "#f59e0b",
+      "collapsed": false,
+      "childNames": [
+        "在途物资",
+        "运输延迟"
+      ]
+    },
+    {
+      "name": "前线作战",
+      "color": "#ef4444",
+      "collapsed": false,
+      "childNames": [
+        "前线储备",
+        "前线消耗率",
+        "战斗损耗率",
+        "战场强度",
+        "补给充足度"
+      ]
+    },
+    {
+      "name": "部队状态",
+      "color": "#10b981",
+      "collapsed": false,
+      "childNames": [
+        "部队士气",
+        "士气恢复率"
+      ]
+    }
+  ],
+  "visualizations": []
+}

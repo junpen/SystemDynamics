@@ -249,15 +249,24 @@ export function modelJSONToGraph(modelJSON, graph) {
       const groupHeight = maxY - minY + padding * 2 + headerHeight;
       const color = group.color || '#818cf8';
 
+      const ellipseW = 140;
+      const ellipseH = 50;
       const groupNode = graph.addNode({
         shape: 'sd:group',
         x: groupX,
         y: groupY,
-        width: groupWidth,
-        height: group.collapsed ? 40 : groupHeight,
+        width: group.collapsed ? ellipseW : groupWidth,
+        height: group.collapsed ? ellipseH : groupHeight,
         attrs: {
-          body: { fill: color + '18', stroke: color },
-          headerBg: { fill: color },
+          body: {
+            fill: group.collapsed ? color + '30' : color + '18',
+            stroke: color,
+            ...(group.collapsed ? { rx: ellipseW / 2, ry: ellipseH / 2, strokeWidth: 2 } : {}),
+          },
+          headerBg: {
+            fill: color,
+            ...(group.collapsed ? { visibility: 'hidden' } : {}),
+          },
         },
         data: {
           isGroup: true,
@@ -267,17 +276,33 @@ export function modelJSONToGraph(modelJSON, graph) {
         },
       });
       groupNode.setAttrByPath('headerLabel/text', group.name || '分组');
-      groupNode.setAttrByPath('toggleIcon/text', group.collapsed ? '▶' : '▼');
+      if (group.collapsed) {
+        groupNode.setAttrByPath('headerLabel/refX', 0.5);
+        groupNode.setAttrByPath('headerLabel/refY', 0.5);
+        groupNode.setAttrByPath('headerLabel/textAnchor', 'middle');
+        groupNode.setAttrByPath('headerLabel/textVerticalAnchor', 'middle');
+        groupNode.setAttrByPath('headerLabel/fill', color);
+        groupNode.setAttrByPath('headerLabel/fontSize', 14);
+        groupNode.setAttrByPath('toggleIcon/visibility', 'hidden');
+      } else {
+        groupNode.setAttrByPath('toggleIcon/text', '▼');
+      }
       groupNode.setProp('zIndex', -1);
       groupNode.toBack();
 
       if (group.collapsed) {
         for (const child of allChildren) {
           child.setVisible(false);
-          const edges = graph.getConnectedEdges(child);
-          for (const edge of edges) {
-            edge.setVisible(false);
+        }
+        // Force edges to stay visible
+        const allEdges = new Set();
+        for (const child of allChildren) {
+          for (const edge of graph.getConnectedEdges(child)) {
+            allEdges.add(edge);
           }
+        }
+        for (const edge of allEdges) {
+          edge.setVisible(true);
         }
       }
     }

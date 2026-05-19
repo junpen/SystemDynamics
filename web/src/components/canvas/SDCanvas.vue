@@ -445,6 +445,97 @@ function handleCreateGroupConfirm({ name, color, nodeIds }) {
 	createGroupOnCanvas(childNodes, name, color);
 }
 
+function resolveToExternalNodes(cellId, childIds, groupNodeId, visited) {
+	if (!visited) visited = new Set();
+	if (visited.has(cellId)) return [];
+	visited.add(cellId);
+	const cell = graph.getCellById(cellId);
+	if (!cell) return [];
+	if (cell.isNode()) {
+		if (!childIds.has(cellId) && cellId !== groupNodeId) return [cellId];
+		return [];
+	}
+	if (cell.isEdge()) {
+		const result = [];
+		const srcId = cell.getSourceCellId();
+		const tgtId = cell.getTargetCellId();
+		if (srcId) result.push(...resolveToExternalNodes(srcId, childIds, groupNodeId, visited));
+		if (tgtId) result.push(...resolveToExternalNodes(tgtId, childIds, groupNodeId, visited));
+		return result;
+	}
+	return [];
+}
+
+function refreshCollapsedGroupDisplayEdges(collapsedGroupNode) {
+	const data = collapsedGroupNode.getData();
+	if (!data?.collapsed) return;
+
+	const oldDisplayEdgeIds = data._displayEdgeIds || [];
+	for (const edgeId of oldDisplayEdgeIds) {
+		const edge = graph.getCellById(edgeId);
+		if (edge) graph.removeCell(edge);
+	}
+
+	const savedEdges = data._savedEdges || {};
+	const childIds = new Set(data.childIds || []);
+	const color = collapsedGroupNode.getAttrByPath('headerBg/fill') || '#818cf8';
+	const externalNodeIds = new Set();
+
+	for (const [edgeId, info] of Object.entries(savedEdges)) {
+		const srcId = info.source?.cell;
+		const tgtId = info.target?.cell;
+		if (srcId) {
+			for (const extId of resolveToExternalNodes(srcId, childIds, collapsedGroupNode.id)) {
+				externalNodeIds.add(extId);
+			}
+		}
+		if (tgtId) {
+			for (const extId of resolveToExternalNodes(tgtId, childIds, collapsedGroupNode.id)) {
+				externalNodeIds.add(extId);
+			}
+		}
+	}
+
+	const displayEdgeIds = [];
+	const seenTargets = new Set();
+	for (const externalId of externalNodeIds) {
+		let targetId = externalId;
+		let extCell = graph.getCellById(externalId);
+		if (!extCell) continue;
+		if (!extCell.isVisible()) {
+			const parentGroup = findCollapsedParentGroup(externalId);
+			if (parentGroup) {
+				targetId = parentGroup.id;
+			} else {
+				continue;
+			}
+		}
+		if (seenTargets.has(targetId)) continue;
+		seenTargets.add(targetId);
+		const displayEdge = graph.addEdge({
+			source: { cell: collapsedGroupNode.id },
+			target: { cell: targetId },
+			attrs: { line: { stroke: color, strokeWidth: 1.5, strokeDasharray: '5,3' } },
+			connector: { name: 'smooth' },
+			data: { isDisplayEdge: true },
+		});
+		displayEdgeIds.push(displayEdge.id);
+	}
+
+	collapsedGroupNode.setData({ ...collapsedGroupNode.getData(), _displayEdgeIds: displayEdgeIds });
+}
+
+function findCollapsedParentGroup(nodeId) {
+	const cells = graph.getCells();
+	for (const cell of cells) {
+		if (!cell.isNode()) continue;
+		const data = cell.getData();
+		if (!data?.isGroup || !data.collapsed) continue;
+		if (data.childIds && data.childIds.includes(nodeId)) return cell;
+	}
+	return null;
+}
+
 function getGroupChildren(groupNode) {
 	const data = groupNode.getData();
 	if (!data || !data.childIds) return [];
@@ -511,37 +602,176 @@ function collapseGroup(groupNode) {
 	const data = groupNode.getData();
 	const children = getGroupChildren(groupNode);
 	const size = groupNode.getSize();
+	const color = groupNode.getAttrByPath('headerBg/fill') || '#818cf8';
+
+	// Collect all edge info and find external nodes
+	const savedEdges = {};
+	const seenEdgeIds = new Set();
+	const childIds = new Set(children.map(c => c.id));
+	const externalNodeIds = new Set();
 
 	for (const child of children) {
-		child.setVisible(false);
-		const edges = graph.getConnectedEdges(child);
-		for (const edge of edges) {
+		for (const edge of graph.getConnectedEdges(child)) {
+			if (seenEdgeIds.has(edge.id)) continue;
+			seenEdgeIds.add(edge.id);
+
+			// Save original edge connection info
+			savedEdges[edge.id] = {
+				source: JSON.parse(JSON.stringify(edge.getSource())),
+				target: JSON.parse(JSON.stringify(edge.getTarget())),
+			};
+
+			// Find external nodes (resolve edge endpoints to actual nodes)
+			const srcId = edge.getSourceCellId();
+			const tgtId = edge.getTargetCellId();
+			if (srcId) {
+				for (const extId of resolveToExternalNodes(srcId, childIds, groupNode.id)) {
+					externalNodeIds.add(extId);
+				}
+			}
+			if (tgtId) {
+				for (const extId of resolveToExternalNodes(tgtId, childIds, groupNode.id)) {
+					externalNodeIds.add(extId);
+				}
+			}
+
+			// Hide original edge
 			edge.setVisible(false);
 		}
 	}
 
-	groupNode.setSize(size.width, 40);
-	groupNode.setData({ ...data, collapsed: true, expandedSize: { width: size.width, height: size.height } });
-	groupNode.setAttrByPath('toggleIcon/text', '▶');
+	// Hide children
+	for (const child of children) {
+		child.setVisible(false);
+	}
+
+	// Redirect existing display edges from other groups that point to this group's children
+	const childIdSet = new Set(children.map(c => c.id));
+	const allEdges = graph.getEdges();
+	for (const edge of allEdges) {
+		const edgeData = edge.getData();
+		if (!edgeData?.isDisplayEdge) continue;
+		const srcId = edge.getSourceCellId();
+		const tgtId = edge.getTargetCellId();
+		if (childIdSet.has(tgtId)) {
+			edge.setTarget({ cell: groupNode.id });
+		}
+		if (childIdSet.has(srcId)) {
+			edge.setSource({ cell: groupNode.id });
+		}
+	}
+
+	// Resize group to collapsed ellipse
+	const ellipseW = 140;
+	const ellipseH = 50;
+	groupNode.setSize(ellipseW, ellipseH);
+
+	// Create display edges: connect to visible nodes or their collapsed parent groups
+	const displayEdgeIds = [];
+	const seenTargets = new Set();
+	for (const externalId of externalNodeIds) {
+		let targetId = externalId;
+		let extCell = graph.getCellById(externalId);
+		if (!extCell) continue;
+		if (!extCell.isVisible()) {
+			const parentGroup = findCollapsedParentGroup(externalId);
+			if (parentGroup) {
+				targetId = parentGroup.id;
+			} else {
+				continue;
+			}
+		}
+		if (seenTargets.has(targetId)) continue;
+		seenTargets.add(targetId);
+		const displayEdge = graph.addEdge({
+			source: { cell: groupNode.id },
+			target: { cell: targetId },
+			attrs: { line: { stroke: color, strokeWidth: 1.5, strokeDasharray: '5,3' } },
+			connector: { name: 'smooth' },
+			data: { isDisplayEdge: true },
+		});
+		displayEdgeIds.push(displayEdge.id);
+	}
+
+	groupNode.setData({
+		...data,
+		collapsed: true,
+		expandedSize: { width: size.width, height: size.height },
+		_savedEdges: savedEdges,
+		_displayEdgeIds: displayEdgeIds,
+	});
+
+	groupNode.setAttrByPath('body/rx', ellipseW / 2);
+	groupNode.setAttrByPath('body/ry', ellipseH / 2);
+	groupNode.setAttrByPath('body/fill', color + '30');
+	groupNode.setAttrByPath('body/strokeWidth', 2);
+	groupNode.setAttrByPath('headerBg/visibility', 'hidden');
+	groupNode.setAttrByPath('headerLabel/refX', 0.5);
+	groupNode.setAttrByPath('headerLabel/refY', 0.5);
+	groupNode.setAttrByPath('headerLabel/textAnchor', 'middle');
+	groupNode.setAttrByPath('headerLabel/textVerticalAnchor', 'middle');
+	groupNode.setAttrByPath('headerLabel/fill', color);
+	groupNode.setAttrByPath('headerLabel/fontSize', 14);
+	groupNode.setAttrByPath('toggleIcon/visibility', 'hidden');
 }
+
 
 function expandGroup(groupNode) {
 	const data = groupNode.getData();
 	const children = getGroupChildren(groupNode);
+	const color = groupNode.getAttrByPath('headerBg/fill') || '#818cf8';
 
-	groupNode.setSize(data.expandedSize.width, data.expandedSize.height);
-
-	for (const child of children) {
-		child.setVisible(true);
-		const edges = graph.getConnectedEdges(child);
-		for (const edge of edges) {
-			edge.setVisible(true);
-		}
+	// Remove display edges first
+	const displayEdgeIds = data._displayEdgeIds || [];
+	for (const edgeId of displayEdgeIds) {
+		const edge = graph.getCellById(edgeId);
+		if (edge) graph.removeCell(edge);
 	}
 
-	groupNode.setData({ ...data, collapsed: false });
+	// Resize group back to expanded state
+	groupNode.setSize(data.expandedSize.width, data.expandedSize.height);
+
+	// Show children
+	for (const child of children) {
+		child.setVisible(true);
+	}
+
+	// Restore original edges
+	const savedEdges = data._savedEdges || {};
+	for (const [edgeId, info] of Object.entries(savedEdges)) {
+		const edge = graph.getCellById(edgeId);
+		if (!edge) continue;
+		edge.setSource(info.source);
+		edge.setTarget(info.target);
+		edge.setVisible(true);
+	}
+
+	groupNode.setData({ ...data, collapsed: false, _savedEdges: null, _displayEdgeIds: null });
+
+	// Refresh display edges for all other collapsed groups
+	const allCells = graph.getCells();
+	for (const cell of allCells) {
+		if (!cell.isNode()) continue;
+		const cellData = cell.getData();
+		if (cellData?.isGroup && cellData?.collapsed && cell.id !== groupNode.id) {
+			refreshCollapsedGroupDisplayEdges(cell);
+		}
+	}
+	groupNode.setAttrByPath('body/rx', 8);
+	groupNode.setAttrByPath('body/ry', 8);
+	groupNode.setAttrByPath('body/fill', color + '18');
+	groupNode.setAttrByPath('body/strokeWidth', 2);
+	groupNode.setAttrByPath('headerBg/visibility', 'visible');
+	groupNode.setAttrByPath('headerLabel/refX', 0.03);
+	groupNode.setAttrByPath('headerLabel/refY', 16);
+	groupNode.setAttrByPath('headerLabel/textAnchor', 'start');
+	groupNode.setAttrByPath('headerLabel/textVerticalAnchor', 'middle');
+	groupNode.setAttrByPath('headerLabel/fill', '#ffffff');
+	groupNode.setAttrByPath('headerLabel/fontSize', 13);
+	groupNode.setAttrByPath('toggleIcon/visibility', 'visible');
 	groupNode.setAttrByPath('toggleIcon/text', '▼');
 }
+
 
 function handleToggleGroup() {
 	const groupNode = ctxMenu.value.cell;
@@ -677,11 +907,15 @@ function initGraph() {
 	graph.on('node:click', ({ node, e }) => {
 		const data = node.getData();
 		if (data?.isGroup) {
-			const nodePos = node.getPosition();
-			const clickLocal = graph.clientToLocal(e.clientX, e.clientY);
-			const relativeY = clickLocal.y - nodePos.y;
-			if (relativeY <= 32) {
+			if (data.collapsed) {
 				toggleGroup(node);
+			} else {
+				const nodePos = node.getPosition();
+				const clickLocal = graph.clientToLocal(e.clientX, e.clientY);
+				const relativeY = clickLocal.y - nodePos.y;
+				if (relativeY <= 32) {
+					toggleGroup(node);
+				}
 			}
 			return;
 		}
